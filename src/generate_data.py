@@ -21,16 +21,16 @@ def possible_strs(set_type):
     all_ints = [''.join(i) for i in itertools.product(possible_values, repeat=str_length)]
     return all_ints
 
-def single_validate_str(string):
+def validate_str(string):
     len_str = len(string)
     set_rep = len(set(string))
     all_same = 1 if set_rep == 1 else 0
     all_diff = 1 if set_rep == len_str else 0
-    return container_dict[(all_same, all_diff)]
+    return all_same, all_diff
 
 def single_set_organization(set_type, set_dict, all_strs):
     for i in all_strs:
-        container_mems = [set_type + j for j in single_validate_str(i)]
+        container_mems = [set_type + j for j in container_dict[validate_str(i)]]
         for k in container_mems:
             set_dict[k].append(int(i))
 
