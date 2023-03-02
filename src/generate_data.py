@@ -28,6 +28,25 @@ def validate_str(string):
     all_diff = 1 if set_rep == len_str else 0
     return all_same, all_diff
 
+def remaining_attributes(string, SET):
+    out = string
+    for i in SET:
+        out = out.replace(i,'',1)
+    return out
+
+def validate_left_overs(SET, left_over):
+    for i in SET:
+        validity = validate_str(left_over+i)
+        if sum(validity) != 0:
+            return validity
+    return validity
+
+def validate_double_str(string, set_type):
+    candidates = [''.join(i) for i in set([tuple(sorted(i)) for i in itertools.combinations([*string], int(set_type[0]))])]
+    candidate_validations = {i:validate_str(i) for i in candidates}
+    left_overs = {i:validate_left_overs(i, remaining_attributes(string,i)) for i in candidates}
+    return candidate_validations, left_overs
+
 def single_set_organization(set_type, set_dict, all_strs):
     for i in all_strs:
         container_mems = [set_type + j for j in container_dict[validate_str(i)]]
@@ -45,6 +64,6 @@ print([x for x in zip(names, scores)]) """
 if __name__ == "__main__":
     set_types = combinations(name_combinations_items[:2])
     set_dict = {i:[] for i in combinations(name_combinations_items)}
-    all_strs = possible_strs(set_types[2])
-    filled_set_dict = single_set_organization(set_types[2], set_dict, all_strs)
+    all_strs = possible_strs(set_types[0])
+    filled_set_dict = single_set_organization(set_types[0], set_dict, all_strs)
     print(filled_set_dict)
