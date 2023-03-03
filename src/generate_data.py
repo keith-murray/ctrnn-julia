@@ -44,8 +44,8 @@ def validate_left_overs(SET, left_over):
 def validate_double_str(string, set_type):
     candidates = [''.join(i) for i in set([tuple(sorted(i)) for i in itertools.combinations([*string], int(set_type[0]))])]
     candidate_validations = {i:validate_str(i) for i in candidates}
-    left_overs = {i:validate_left_overs(i, remaining_attributes(string,i)) for i in candidates}
-    return candidate_validations, left_overs
+    left_over_validations = {i:validate_left_overs(i, remaining_attributes(string,i)) for i in candidates}
+    return candidate_validations, left_over_validations #TODO: compute the final validity of the double SET
 
 def single_set_organization(set_type, set_dict, all_strs):
     for i in all_strs:
