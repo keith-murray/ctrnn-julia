@@ -43,23 +43,13 @@ def validate_left_overs(SET, left_over):
 
 def double_set_logic(candidate, left_over):
     keys = candidate.keys()
-    result_store = None
-    count = 0
     result = (0,0)
     for i in keys:
         if sum(candidate[i]) != 0:
             if candidate[i] == left_over[i]:
                 result = candidate[i]
-                if count == 0:
-                    result_store = candidate[i]
-                    count += 1
             elif sum(candidate[i]) == sum(left_over[i]):
                 result = (1,1)
-                if count == 0:
-                    result_store = (1,1)
-                    count += 1
-    if result_store != result and result_store is not None:
-        print('woah boy')
     return result
 
 def validate_double_str(string, set_type):
@@ -68,23 +58,37 @@ def validate_double_str(string, set_type):
     left_over_validations = {i:validate_left_overs(i, remaining_attributes(string,i)) for i in candidates}
     return double_set_logic(candidate_validations, left_over_validations)
 
-def single_set_organization(set_type, set_dict, all_strs):
+def set_organization(set_type, set_dict, all_strs):
     for i in all_strs:
-        container_mems = [set_type + j for j in container_dict[validate_str(i)]]
+        if set_type[1] == "D":
+            container_mems = [set_type + j for j in container_dict[validate_double_str(i, set_type)]]
+        else:
+            container_mems = [set_type + j for j in container_dict[validate_str(i)]]
         for k in container_mems:
             set_dict[k].append(int(i))
-
     return set_dict
 
+def fill_set_dict(set_types, set_dict):
+    for i in set_types:
+        strs_for_type = possible_strs(i)
+        set_dict = set_organization(i, set_dict, strs_for_type)
+    return set_dict
 
-""" names = ['Player Name', 'Foo', 'Bar', -1, -1]
-scores = ['Score', 250, 500, 100, 30]
-np.savetxt('..\data\scores.csv', [p for p in zip(names, scores)], delimiter=',', fmt='%s')
-print([x for x in zip(names, scores)]) """
+def pad_dict(set_dict):
+    SETs = []
+    max_len = max([len(set_dict[i]) for i in set_dict])
+    for i in set_dict:
+        current_set = set_dict[i]
+        SETs.append([i,]+current_set+[-1 for i in range(max_len-len(current_set))])
+    return SETs
 
-if __name__ == "__main__":
+def create_SETs():
     set_types = combinations(name_combinations_items[:2])
     set_dict = {i:[] for i in combinations(name_combinations_items)}
-    all_strs = possible_strs(set_types[0])
-    filled_set_dict = single_set_organization(set_types[0], set_dict, all_strs)
-    print(filled_set_dict)
+    set_dict = fill_set_dict(set_types, set_dict)
+    SETs = pad_dict(set_dict)
+    np.savetxt('..\data\SETs.csv', [p for p in zip(*SETs)], delimiter=',', fmt='%s')
+
+
+if __name__ == "__main__":
+    create_SETs()
