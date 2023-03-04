@@ -4,11 +4,11 @@ This python file generates all rule data and stores it in a csv.
 import itertools
 import numpy as np
 
-name_combinations_items = [("3","4"),("S","D"),("N","Y"),("N","Y"),("A","D")]
-container_dict = {(0,0):["NNA","NYD","YND","YYD"],
-                    (0,1):["NND","NYA","YND","YYA"],
-                    (1,0):["NND","NYD","YNA","YYA"],
-                    (1,1):["NND","NYD","YND","YYA"]}
+name_combinations_items = [("3","4"),("S","D"),("N","Y"),("N","Y"),("A","R")]
+container_dict = {(0,0):["NNA","NYR","YNR","YYR"],
+                    (0,1):["NNR","NYA","YNR","YYA"],
+                    (1,0):["NNR","NYR","YNA","YYA"],
+                    (1,1):["NNR","NYR","YNR","YYA"]}
 
 def combinations(lst):
     # Generate all possible combinations of items in the tuples
@@ -79,7 +79,7 @@ def pad_dict(set_dict):
     max_len = max([len(set_dict[i]) for i in set_dict])
     for i in set_dict:
         current_set = set_dict[i]
-        SETs.append([i,]+current_set+[-1 for i in range(max_len-len(current_set))])
+        SETs.append([i,]+current_set+['?' for i in range(max_len-len(current_set))])
     return SETs
 
 def create_SETs():
