@@ -57,8 +57,17 @@ df_rates = create_dataframe_freq(names(df), calc_acceptance_from_lengths(df))
 begin
 	set_aog_theme!()
 	acceptance_data = data(df_rates) * mapping(:Rules, :"Acceptance rate")
-	draw(acceptance_data)
+	fg_acceptance = draw(acceptance_data)
 end
+
+# ╔═╡ 1a9683f0-c3e7-4f65-acac-5afddea0822d
+save("../results/acceptance_rate.png", fg_acceptance, px_per_unit = 3)
+
+# ╔═╡ 365c8728-71bf-47fa-83cf-096238aa26bd
+md"## Encode strings in signals"
+
+# ╔═╡ 38f7e638-18fb-47c9-9ec0-3ab9eb98e2d0
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1466,5 +1475,8 @@ version = "3.5.0+0"
 # ╟─423e2f87-fe4d-4450-b7b6-0062df40b362
 # ╟─38bf210d-3cd7-4fd9-bd70-fa2fb3d4c925
 # ╟─19c7dd3f-0535-49e7-b7bb-362aa383ba27
+# ╟─1a9683f0-c3e7-4f65-acac-5afddea0822d
+# ╟─365c8728-71bf-47fa-83cf-096238aa26bd
+# ╠═38f7e638-18fb-47c9-9ec0-3ab9eb98e2d0
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
