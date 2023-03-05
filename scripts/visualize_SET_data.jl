@@ -28,17 +28,36 @@ md"## Load data"
 # ╔═╡ 52eff368-0c25-4015-9883-5587d9982d4e
 df = CSV.read("../data/SETs.csv", DataFrame, missingstring="?", delim=",", header=true)
 
-# ╔═╡ f6eba345-3eab-4a78-9511-05d6ee967436
-column_names = names(df)
-
-# ╔═╡ 6a159bb2-6142-4107-a361-bce581e83a60
-collect(skipmissing(df."3SYYR"))
+# ╔═╡ 2cd7a758-e399-4f1d-a233-149e7c02ce72
+md"## Calculate averages"
 
 # ╔═╡ 821f9bab-2617-4a2a-817f-e605caa360c2
+function calc_acceptance_from_lengths(df::DataFrame)
+    lengths = []
+    for col in eachcol(df)
+        col_len = length(collect(skipmissing(col)))
+        push!(lengths, col_len)
+    end
+    return [lengths[i]/(lengths[i+1]+lengths[i]) for (i, s) in enumerate(lengths) if i % 2 == 1]
+end
+
+# ╔═╡ 423e2f87-fe4d-4450-b7b6-0062df40b362
+function create_dataframe_freq(col_names, acceptance_rates)
+	rev_names = [s[1:end-1] for (i, s) in enumerate(col_names) if i % 2 == 1]
+	df = DataFrame()
+	df[!, "Rules"] = rev_names
+	df[!, "Acceptance rate"] = acceptance_rates
+	return df
+end
+
+# ╔═╡ 38bf210d-3cd7-4fd9-bd70-fa2fb3d4c925
+df_rates = create_dataframe_freq(names(df), calc_acceptance_from_lengths(df))
+
+# ╔═╡ 19c7dd3f-0535-49e7-b7bb-362aa383ba27
 begin
-	for col in eachcol(df)
-		println(collect(skipmissing(col)))
-	end
+	set_aog_theme!()
+	acceptance_data = data(df_rates) * mapping(:Rules, :"Acceptance rate")
+	draw(acceptance_data)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1442,8 +1461,10 @@ version = "3.5.0+0"
 # ╠═07d51210-0244-40a2-8af1-bdc7d9df416f
 # ╟─c4a95a0a-2362-44f4-a146-31f1311e00de
 # ╟─52eff368-0c25-4015-9883-5587d9982d4e
-# ╟─f6eba345-3eab-4a78-9511-05d6ee967436
-# ╠═6a159bb2-6142-4107-a361-bce581e83a60
-# ╠═821f9bab-2617-4a2a-817f-e605caa360c2
+# ╟─2cd7a758-e399-4f1d-a233-149e7c02ce72
+# ╟─821f9bab-2617-4a2a-817f-e605caa360c2
+# ╟─423e2f87-fe4d-4450-b7b6-0062df40b362
+# ╟─38bf210d-3cd7-4fd9-bd70-fa2fb3d4c925
+# ╟─19c7dd3f-0535-49e7-b7bb-362aa383ba27
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
