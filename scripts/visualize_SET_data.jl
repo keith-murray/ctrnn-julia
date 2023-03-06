@@ -67,7 +67,31 @@ save("../results/acceptance_rate.png", fg_acceptance, px_per_unit = 3)
 md"## Encode strings in signals"
 
 # ╔═╡ 38f7e638-18fb-47c9-9ec0-3ab9eb98e2d0
-
+function make_1D_signal(SET::Int64, signal_width::Tuple{Float64, Float64}, delay_gap::Tuple{Float64, Float64})
+	#=
+	SET is an integer value of attributes, e.g. 13231
+	signal_width is a tuple of min signal width and max signal width, e.g. (0.1, 0.5)
+	delay_width is a tuple of min delay width and max delay width, e.g. (0.25, 0.8)
+	-----
+	signal and delay widths are drawn from uniform distribution
+	The signal function is essentially a binary search algorithm
+	=#
+    SET_string = digits(SET)
+	SET_length = length(SET_string)
+	zero_string = zeros(SET_length)
+	signal_values = [zero_string SET_string]'[:]
+	append!(signal_values, zeros(1))
+	
+	signal_widths = rand(SET_length).*(signal_width[2]-signal_width[1]).+signal_width[1]
+	delay_gaps = rand(SET_length).*(delay_gap[2]-delay_gap[1]).+delay_gap[1]
+	signal_t_stamps = [delay_gaps signal_widths]'[:]
+	signal_t_stamps = cumsum(signal_t_stamps)
+	
+	function signal(t::Float64)::Float64
+		return signal_values[searchsortedfirst(signal_t_stamps, t)]
+	end
+	return signal
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
