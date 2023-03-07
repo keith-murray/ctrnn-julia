@@ -76,7 +76,7 @@ function make_1D_signal(SET::Int64, signal_width::Tuple{Float64, Float64}, delay
 	signal and delay widths are drawn from uniform distribution
 	The signal function is essentially a binary search algorithm
 	=#
-    SET_string = digits(SET)
+    SET_string = reverse(digits(SET))
 	SET_length = length(SET_string)
 	zero_string = zeros(SET_length)
 	signal_values = [zero_string SET_string]'[:]
@@ -92,6 +92,21 @@ function make_1D_signal(SET::Int64, signal_width::Tuple{Float64, Float64}, delay
 	end
 	return signal
 end
+
+# ╔═╡ 0002fed2-440b-4da4-8493-7954b32f3518
+begin
+	signal = make_1D_signal(31323, (0.1,0.25), (0.2,0.35))
+	time = range(start = 0.0, stop=2.75, step=0.01)
+	set_signal = signal.(time)
+	df_signal = DataFrame()
+	df_signal[!, "Time"] = time
+	df_signal[!, "Signal"] = set_signal
+	signal_data = data(df_signal) * mapping(:Time, :Signal) * visual(Lines)
+	fg_signal = draw(signal_data)
+end
+
+# ╔═╡ a1dba411-c7cd-47f2-9daa-8d20c0de4a1f
+save("../results/single_dim_signal.png", fg_signal, px_per_unit = 3)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1502,5 +1517,7 @@ version = "3.5.0+0"
 # ╟─1a9683f0-c3e7-4f65-acac-5afddea0822d
 # ╟─365c8728-71bf-47fa-83cf-096238aa26bd
 # ╠═38f7e638-18fb-47c9-9ec0-3ab9eb98e2d0
+# ╟─0002fed2-440b-4da4-8493-7954b32f3518
+# ╟─a1dba411-c7cd-47f2-9daa-8d20c0de4a1f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
