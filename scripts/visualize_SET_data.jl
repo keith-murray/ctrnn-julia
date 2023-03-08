@@ -66,6 +66,9 @@ save("../results/acceptance_rate.png", fg_acceptance, px_per_unit = 3)
 # ╔═╡ 365c8728-71bf-47fa-83cf-096238aa26bd
 md"## Encode strings in signals"
 
+# ╔═╡ b6fe92c1-fcd1-4cc2-89bc-c3ca99420919
+md"### 1D signal"
+
 # ╔═╡ 38f7e638-18fb-47c9-9ec0-3ab9eb98e2d0
 function make_1D_signal(SET::Int64, signal_width::Tuple{Float64, Float64}, delay_gap::Tuple{Float64, Float64})
 	#=
@@ -107,6 +110,59 @@ end
 
 # ╔═╡ a1dba411-c7cd-47f2-9daa-8d20c0de4a1f
 save("../results/single_dim_signal.png", fg_signal, px_per_unit = 3)
+
+# ╔═╡ ae9af279-a66e-44e1-b38c-fd832b1bc753
+md"### 4D signal"
+
+# ╔═╡ 64d5b4cc-414a-47fe-8d22-e9eca29aa946
+function make_4D_signal(SET::Int64, signal_width::Tuple{Float64, Float64}, delay_gap::Tuple{Float64, Float64})
+	#=
+	SET is an integer value of attributes, e.g. 13231
+	signal_width is a tuple of min signal width and max signal width, e.g. (0.1, 0.5)
+	delay_width is a tuple of min delay width and max delay width, e.g. (0.25, 0.8)
+	-----
+	signal and delay widths are drawn from uniform distribution
+	The signal function is essentially a binary search algorithm
+	=#
+    SET_string = reverse(digits(SET))
+	SET_length = length(SET_string)
+	zero_string = zeros(Int64, SET_length)
+	signal_values = [zero_string SET_string]'[:]
+	append!(signal_values, zeros(Int64, 1))
+	
+	signal_widths = rand(SET_length).*(signal_width[2]-signal_width[1]).+signal_width[1]
+	delay_gaps = rand(SET_length).*(delay_gap[2]-delay_gap[1]).+delay_gap[1]
+	signal_t_stamps = [delay_gaps signal_widths]'[:]
+	signal_t_stamps = cumsum(signal_t_stamps)
+	
+	function signal(t::Float64)::Vector{Float64}
+		val = signal_values[searchsortedfirst(signal_t_stamps, t)]
+		vec = zeros(4)
+		if val != 0
+			vec[val] = 1
+		end
+		return vec
+	end
+	return signal
+end
+
+# ╔═╡ 15815d6b-3b5e-4c14-9d33-2c30f3f4e569
+begin
+	signal_4D = make_4D_signal(31323, (0.1,0.25), (0.2,0.35))
+	set_signal_4D = reduce(hcat, signal_4D.(time))'
+	df_4D = DataFrame()
+	df_4D[!, "Time"] = time
+	df_4D[!, "attr. 1"] = set_signal_4D[:, 1]
+	df_4D[!, "attr. 2"] = set_signal_4D[:, 2]
+	df_4D[!, "attr. 3"] = set_signal_4D[:, 3]
+	df_4D[!, "attr. 4"] = set_signal_4D[:, 4]
+	labels = ["attr. 1", "attr. 2", "attr. 3", "attr. 4"]
+	signal_4D_data = data(df_4D) * mapping(:Time, [:"attr. 1", :"attr. 2", :"attr. 3", :"attr. 4"] .=> "binary", color=dims(1) => renamer(labels) => "attributes") * visual(Lines)
+	fig_signal_4D = draw(signal_4D_data)
+end
+
+# ╔═╡ 9b95ca28-8c40-4ebe-b93a-3cf0a98cdf1d
+save("../results/four_dim_signal.png", fig_signal_4D, px_per_unit = 3)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1516,8 +1572,13 @@ version = "3.5.0+0"
 # ╟─19c7dd3f-0535-49e7-b7bb-362aa383ba27
 # ╟─1a9683f0-c3e7-4f65-acac-5afddea0822d
 # ╟─365c8728-71bf-47fa-83cf-096238aa26bd
+# ╟─b6fe92c1-fcd1-4cc2-89bc-c3ca99420919
 # ╠═38f7e638-18fb-47c9-9ec0-3ab9eb98e2d0
 # ╟─0002fed2-440b-4da4-8493-7954b32f3518
 # ╟─a1dba411-c7cd-47f2-9daa-8d20c0de4a1f
+# ╟─ae9af279-a66e-44e1-b38c-fd832b1bc753
+# ╠═64d5b4cc-414a-47fe-8d22-e9eca29aa946
+# ╟─15815d6b-3b5e-4c14-9d33-2c30f3f4e569
+# ╟─9b95ca28-8c40-4ebe-b93a-3cf0a98cdf1d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
