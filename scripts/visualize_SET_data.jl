@@ -164,6 +164,9 @@ end
 # ╔═╡ 9b95ca28-8c40-4ebe-b93a-3cf0a98cdf1d
 save("../results/four_dim_signal.png", fig_signal_4D, px_per_unit = 3)
 
+# ╔═╡ 67ffb9a1-1e5b-434a-b0e3-05ccddb5be37
+typeof(signal) <: Function
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -1580,5 +1583,6 @@ version = "3.5.0+0"
 # ╠═64d5b4cc-414a-47fe-8d22-e9eca29aa946
 # ╟─15815d6b-3b5e-4c14-9d33-2c30f3f4e569
 # ╟─9b95ca28-8c40-4ebe-b93a-3cf0a98cdf1d
+# ╠═67ffb9a1-1e5b-434a-b0e3-05ccddb5be37
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
