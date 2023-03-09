@@ -50,20 +50,54 @@ md"### Create dummy type to use function"
 
 # ╔═╡ d1436ec2-3631-4bf0-be35-1bf6740abc76
 begin
-	struct DummyFunctionLinear{L1, L2} <: Lux.AbstractExplicitContainerLayer{(:linear_1, :linear_2)}
-	    linear_1::L1
-	    linear_2::L2
+	struct DummyLinear{L,} <: Lux.AbstractExplicitContainerLayer{(:linear,)}
+	    linear::L
 	end
 	
-	function (cl::ComposedLinear)(x::AbstractMatrix, ps, st::NamedTuple)
-	    # To access the parameters and states for `linear_1` we do `ps.linear_1` and
-	    # `st.linear_1`. Similarly for `linear_2`
-	    y, st_l1 = cl.linear_1(x, ps.linear_1, st.linear_1)
-	    y, st_l2 = cl.linear_2(y, ps.linear_2, st.linear_2)
-	    # Finally, we need to return the new state which has the exact structure as `st`
-	    return y, (linear_1 = st_l1, linear_2 = st_l2)
+	function (dl::DummyLinear)(x::FunctionAndArray, ps, st::NamedTuple)
+	    y, st_out = dl.linear(x.array, ps, st)
+	    y = x.func.(y)
+	    return y, st_out
+	end
+
+	function Lux.apply(layer::DummyLinear, x::FunctionAndArray, ps, st::NamedTuple)
+    	y, st = layer(x, ps, st)
+    	return y, st
 	end
 end
+
+# ╔═╡ b7554f71-5e6e-4396-bd7e-09f8863ba6af
+function create_dummy_model()
+    model = Chain(Dense(1, 4,), DummyLinear(Dense(4,4),), Dense(4, 1, relu))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+    ps, st = Lux.setup(rng, model)
+
+    return model, ps, st
+end
+
+# ╔═╡ e5836c12-f856-4308-ae57-5a02c9b03c69
+md"### Test FunctionAndArray type"
+
+# ╔═╡ d2719ba2-f0f7-416e-9a2d-b27e7a46723c
+function DummyDivide(x)
+	return x / 2
+end
+
+# ╔═╡ e4d17a9b-2db8-41f7-bfbf-cc2a9ffeda61
+FaA = FunctionAndArray(DummyDivide, ones(1,1))
+
+# ╔═╡ 0e8f3cc8-9686-4152-83bd-bc2ebcdf28f7
+model, ps, st = create_dummy_model()
+
+# ╔═╡ a0cea13d-8dd9-4451-9c39-be41779ee56c
+FaA_out, st_out = Lux.apply(model, FaA, ps, st)
+
+# ╔═╡ e78b9d60-c308-47b0-89b6-16ea25f3d31f
+md"""
+This is crazy. Creating a new data type that stores functions and arrays actually works when passed through Lux. This is really good. This means that the NeuralODE can be built with this data type and new functions can be passed through with ease. It's a good day to be a Julia user.
+"""
 
 # ╔═╡ 96fe8e9d-5c20-4450-b917-d6516c5b38b8
 md"## Modify NeuralODE type"
@@ -1440,6 +1474,13 @@ version = "17.4.0+0"
 # ╟─4346deec-3774-4e32-a330-fce01d1b432b
 # ╟─5fa565ce-5475-4214-a315-563dcfef1516
 # ╠═d1436ec2-3631-4bf0-be35-1bf6740abc76
+# ╠═b7554f71-5e6e-4396-bd7e-09f8863ba6af
+# ╟─e5836c12-f856-4308-ae57-5a02c9b03c69
+# ╠═d2719ba2-f0f7-416e-9a2d-b27e7a46723c
+# ╠═e4d17a9b-2db8-41f7-bfbf-cc2a9ffeda61
+# ╠═0e8f3cc8-9686-4152-83bd-bc2ebcdf28f7
+# ╠═a0cea13d-8dd9-4451-9c39-be41779ee56c
+# ╟─e78b9d60-c308-47b0-89b6-16ea25f3d31f
 # ╟─96fe8e9d-5c20-4450-b917-d6516c5b38b8
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
