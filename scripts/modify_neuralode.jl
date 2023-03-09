@@ -22,35 +22,51 @@ The purpose of this notebook is to:
 md"## Setup"
 
 # ╔═╡ 3c1733c9-331b-40f4-ad69-f5e0f9a8f4e8
-md"## Create function-accepting Chain"
+md"## Create type to store function and array"
 
 # ╔═╡ 701c718c-e493-4584-a32a-7eed85d6d045
-struct FunctionAndIC{Func <: Function, A <: AbstractArray}
+struct FunctionAndArray{Func <: Function, A <: AbstractArray}
     func::Func
-    IC::A
+    array::A
+end
+
+# ╔═╡ d833d9ed-7bfc-49f2-869f-1642e14e69e2
+function Lux.apply(layer::Lux.AbstractExplicitLayer, x::FunctionAndArray, ps, st::NamedTuple)
+    y, st = layer(x.array, ps, st)
+    return FunctionAndArray(x.func, y), st
 end
 
 # ╔═╡ c2c90ca7-79fb-41b4-85d9-6db8dfe755fe
-function Lux.apply(layer::RNNChain, x::FunctionAndIC, ps, st::NamedTuple)
-    y, st = layer((x.func, x.IC), ps, st)
-    return y, st
+function Lux.apply(layer::Lux.Chain, x::FunctionAndArray, ps, st::NamedTuple)
+    y, st = layer(x, ps, st)
+    return FunctionAndArray(x.func, y), st
 end
 
-# ╔═╡ 7efc70d5-0195-4407-8c12-53d2f22919b3
+# ╔═╡ 4346deec-3774-4e32-a330-fce01d1b432b
+md"## Test FunctionAndArray type"
+
+# ╔═╡ 5fa565ce-5475-4214-a315-563dcfef1516
+md"### Create dummy type to use function"
+
+# ╔═╡ d1436ec2-3631-4bf0-be35-1bf6740abc76
 begin
-struct RNNChain{L <: NamedTuple} <: Lux.AbstractExplicitContainerLayer{(:layers,)}
-    layers::L
+	struct DummyFunctionLinear{L1, L2} <: Lux.AbstractExplicitContainerLayer{(:linear_1, :linear_2)}
+	    linear_1::L1
+	    linear_2::L2
+	end
+	
+	function (cl::ComposedLinear)(x::AbstractMatrix, ps, st::NamedTuple)
+	    # To access the parameters and states for `linear_1` we do `ps.linear_1` and
+	    # `st.linear_1`. Similarly for `linear_2`
+	    y, st_l1 = cl.linear_1(x, ps.linear_1, st.linear_1)
+	    y, st_l2 = cl.linear_2(y, ps.linear_2, st.linear_2)
+	    # Finally, we need to return the new state which has the exact structure as `st`
+	    return y, (linear_1 = st_l1, linear_2 = st_l2)
+	end
 end
 
-function (l::RNNChain)((func, IC)::Tuple, ps, st::NamedTuple)
-    for name in keys(l.layers)
-        x, st_ = Lux.apply(getfield(l.layers, name), (func, IC),
-                           getfield(ps, name), getfield(st, name))
-        st = merge(st, NamedTuple{(name,)}((st_,)))
-    end
-    return x, st
-end
-end
+# ╔═╡ 96fe8e9d-5c20-4450-b917-d6516c5b38b8
+md"## Modify NeuralODE type"
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -80,7 +96,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "d9b70bbf195b4add4a4b12d193d0694b2ab5281d"
+project_hash = "362ca2acd759e29d014a960177bbf002515954cf"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1418,8 +1434,12 @@ version = "17.4.0+0"
 # ╟─ef7b94c4-d409-4bae-852e-1cfac5bcd1f2
 # ╠═043edb7f-3042-4037-8e02-5332fb068558
 # ╟─3c1733c9-331b-40f4-ad69-f5e0f9a8f4e8
-# ╠═7efc70d5-0195-4407-8c12-53d2f22919b3
 # ╠═701c718c-e493-4584-a32a-7eed85d6d045
+# ╠═d833d9ed-7bfc-49f2-869f-1642e14e69e2
 # ╠═c2c90ca7-79fb-41b4-85d9-6db8dfe755fe
+# ╟─4346deec-3774-4e32-a330-fce01d1b432b
+# ╟─5fa565ce-5475-4214-a315-563dcfef1516
+# ╠═d1436ec2-3631-4bf0-be35-1bf6740abc76
+# ╟─96fe8e9d-5c20-4450-b917-d6516c5b38b8
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
