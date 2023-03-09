@@ -78,7 +78,7 @@ function create_dummy_model()
 end
 
 # ╔═╡ e5836c12-f856-4308-ae57-5a02c9b03c69
-md"### Test FunctionAndArray type"
+md"### Test with Chain"
 
 # ╔═╡ d2719ba2-f0f7-416e-9a2d-b27e7a46723c
 function DummyDivide(x)
@@ -101,6 +101,33 @@ This is crazy. Creating a new data type that stores functions and arrays actuall
 
 # ╔═╡ 96fe8e9d-5c20-4450-b917-d6516c5b38b8
 md"## Modify NeuralODE type"
+
+# ╔═╡ a26cedd1-a04f-4c3f-ae93-385c24d9f298
+begin
+	struct NeuralODE{M <: Lux.AbstractExplicitLayer, So, Se, T, K} <:
+	       Lux.AbstractExplicitContainerLayer{(:model,)}
+	    model::M
+	    solver::So
+	    sensealg::Se
+	    tspan::T
+	    kwargs::K
+	end
+	
+	function NeuralODE(model::Lux.AbstractExplicitLayer; solver=Tsit5(),
+	                   sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()),
+	                   tspan=(0.0f0, 1.0f0), kwargs...)
+	    return NeuralODE(model, solver, sensealg, tspan, kwargs)
+	end
+	
+	function (n::NeuralODE)(x, ps, st)
+	    function dudt(u, p, t)
+	        u_, st = n.model(u, p, st)
+	        return u_
+	    end
+	    prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
+	    return solve(prob, n.solver; sensealg=n.sensealg, n.kwargs...), st
+	end
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1482,5 +1509,6 @@ version = "17.4.0+0"
 # ╠═a0cea13d-8dd9-4451-9c39-be41779ee56c
 # ╟─e78b9d60-c308-47b0-89b6-16ea25f3d31f
 # ╟─96fe8e9d-5c20-4450-b917-d6516c5b38b8
+# ╠═a26cedd1-a04f-4c3f-ae93-385c24d9f298
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
