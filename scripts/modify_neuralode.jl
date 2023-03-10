@@ -91,9 +91,6 @@ FaA = FunctionAndArray(DummyDivide, ones(1,1))
 # ╔═╡ 0e8f3cc8-9686-4152-83bd-bc2ebcdf28f7
 model, ps, st = create_dummy_model()
 
-# ╔═╡ a0cea13d-8dd9-4451-9c39-be41779ee56c
-FaA_out, st_out = Lux.apply(model, FaA, ps, st)
-
 # ╔═╡ e78b9d60-c308-47b0-89b6-16ea25f3d31f
 md"""
 This is crazy. Creating a new data type that stores functions and arrays actually works when passed through Lux. This is really good. This means that the NeuralODE can be built with this data type and new functions can be passed through with ease. It's a good day to be a Julia user.
@@ -104,30 +101,62 @@ md"## Modify NeuralODE type"
 
 # ╔═╡ a26cedd1-a04f-4c3f-ae93-385c24d9f298
 begin
-	struct NeuralODE{M <: Lux.AbstractExplicitLayer, So, Se, T, K} <:
-	       Lux.AbstractExplicitContainerLayer{(:model,)}
-	    model::M
+	struct NeuralODE{M <: Lux.AbstractExplicitLayer, W <: Lux.AbstractExplicitLayer, F, So, Se, T, K} <: Lux.AbstractExplicitContainerLayer{(:recurrent_model, :input_model)}
+	    recurrent_model::M
+	    input_model::W
+		activation_func::F
 	    solver::So
 	    sensealg::Se
 	    tspan::T
 	    kwargs::K
 	end
 	
-	function NeuralODE(model::Lux.AbstractExplicitLayer; solver=Tsit5(),
-	                   sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()),
-	                   tspan=(0.0f0, 1.0f0), kwargs...)
-	    return NeuralODE(model, solver, sensealg, tspan, kwargs)
+	function NeuralODE(recurrent_model::Lux.AbstractExplicitLayer, input_model::Lux.AbstractExplicitLayer, activation_func=NNlib.tanh_fast, solver=Tsit5(), sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()), tspan=(0.0f0, 1.0f0), kwargs...)
+	    return NeuralODE(recurrent_model, input_model, activation_func, solver, sensealg, tspan, kwargs)
 	end
 	
 	function (n::NeuralODE)(x, ps, st)
 	    function dudt(u, p, t)
-	        u_, st = n.model(u, p, st)
+			rec_out, rec_st = n.recurrent_model(n.activation_func.(u), p.recurrent_model, st)
+			in_out, in_st = n.input_model(x.func(hcat(t)), p.input_model, st)
+	        u_ = -1.0 .* u - rec_out + in_out
 	        return u_
 	    end
-	    prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
+	    prob = ODEProblem{false}(ODEFunction{false}(dudt), x.array, n.tspan, ps)
 	    return solve(prob, n.solver; sensealg=n.sensealg, n.kwargs...), st
 	end
+	
+	function Lux.apply(layer::NeuralODE, x::FunctionAndArray, ps, st::NamedTuple)
+    	y, st = layer(x, ps, st)
+    	return y, st
+	end
 end
+
+# ╔═╡ a0cea13d-8dd9-4451-9c39-be41779ee56c
+FaA_out, st_out = Lux.apply(model, FaA, ps, st)
+
+# ╔═╡ 38897723-40c1-4dda-a381-fa2362ea8e1f
+md"## Test NeuralODE"
+
+# ╔═╡ 312ac19a-9140-43c8-bff1-c3575a9cc808
+FaA_NODE_test = FunctionAndArray(DummyDivide, ones(5,1))
+
+# ╔═╡ 5856b332-35cd-4c55-a9f5-da2c19c30c16
+function create_NODE_model()
+    model = NeuralODE(Dense(5,5, use_bias=false), Dense(1,5,))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+    ps, st = Lux.setup(rng, model)
+
+    return model, ps, st
+end
+
+# ╔═╡ 00881128-07b6-40bf-8fb1-790476423e68
+model_NODE_test, ps_NODE, st_NODE = create_NODE_model()
+
+# ╔═╡ 2535ba72-5c29-4524-9290-fb3c1a9029c9
+FaA_NODE_out, st_NODE_out = Lux.apply(model_NODE_test, FaA_NODE_test, ps_NODE, st_NODE)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1510,5 +1539,10 @@ version = "17.4.0+0"
 # ╟─e78b9d60-c308-47b0-89b6-16ea25f3d31f
 # ╟─96fe8e9d-5c20-4450-b917-d6516c5b38b8
 # ╠═a26cedd1-a04f-4c3f-ae93-385c24d9f298
+# ╟─38897723-40c1-4dda-a381-fa2362ea8e1f
+# ╠═312ac19a-9140-43c8-bff1-c3575a9cc808
+# ╠═5856b332-35cd-4c55-a9f5-da2c19c30c16
+# ╠═00881128-07b6-40bf-8fb1-790476423e68
+# ╠═2535ba72-5c29-4524-9290-fb3c1a9029c9
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
