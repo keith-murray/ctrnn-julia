@@ -135,8 +135,16 @@ end
 # ╔═╡ a0cea13d-8dd9-4451-9c39-be41779ee56c
 FaA_out, st_out = Lux.apply(model, FaA, ps, st)
 
+# ╔═╡ 030bd9a3-353c-4ef3-b25c-8e980ae40805
+function diffeqsol_to_array(x::ODESolution)
+    return dropdims(Array(x); dims=2)
+end
+
 # ╔═╡ 38897723-40c1-4dda-a381-fa2362ea8e1f
 md"## Test NeuralODE"
+
+# ╔═╡ 3f57ebac-43ce-41e1-b514-c3d8349bd27a
+md"### Test without chain"
 
 # ╔═╡ 312ac19a-9140-43c8-bff1-c3575a9cc808
 FaA_NODE_test = FunctionAndArray(DummyDivide, ones(5,1))
@@ -157,6 +165,32 @@ model_NODE_test, ps_NODE, st_NODE = create_NODE_model()
 
 # ╔═╡ 2535ba72-5c29-4524-9290-fb3c1a9029c9
 FaA_NODE_out, st_NODE_out = Lux.apply(model_NODE_test, FaA_NODE_test, ps_NODE, st_NODE)
+
+# ╔═╡ d1519268-d275-4439-afcd-8b85e437dbb6
+diffeqsol_to_array(FaA_NODE_out)
+
+# ╔═╡ c5aa0a2c-a0c5-479f-b744-3b59fe45f365
+md"### Test with chain"
+
+# ╔═╡ 7e08f9d7-5eba-419f-911e-0c85799f8ebb
+chain_input = FunctionAndArray(DummyDivide, ones(10,1))
+
+# ╔═╡ 2b8fff44-a4b7-4832-8ccb-823a20946838
+function create_NODE_chain_model()
+    model = Chain(NeuralODE(Dense(10,10, use_bias=false), Dense(1,10,)), diffeqsol_to_array, Dense(10,1))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+    ps, st = Lux.setup(rng, model)
+
+    return model, ps, st
+end
+
+# ╔═╡ 153db7de-fb01-484f-8e64-702ef31214f4
+chain_NODE_model, ps_chain, st_chain = create_NODE_chain_model()
+
+# ╔═╡ d1909ff5-5102-42a5-b7c3-e6bb11ffba21
+chain_NODE_out, st_chain_out = Lux.apply(chain_NODE_model, chain_input, ps_chain, st_chain)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1539,10 +1573,18 @@ version = "17.4.0+0"
 # ╟─e78b9d60-c308-47b0-89b6-16ea25f3d31f
 # ╟─96fe8e9d-5c20-4450-b917-d6516c5b38b8
 # ╠═a26cedd1-a04f-4c3f-ae93-385c24d9f298
+# ╠═030bd9a3-353c-4ef3-b25c-8e980ae40805
 # ╟─38897723-40c1-4dda-a381-fa2362ea8e1f
+# ╟─3f57ebac-43ce-41e1-b514-c3d8349bd27a
 # ╠═312ac19a-9140-43c8-bff1-c3575a9cc808
 # ╠═5856b332-35cd-4c55-a9f5-da2c19c30c16
 # ╠═00881128-07b6-40bf-8fb1-790476423e68
 # ╠═2535ba72-5c29-4524-9290-fb3c1a9029c9
+# ╠═d1519268-d275-4439-afcd-8b85e437dbb6
+# ╟─c5aa0a2c-a0c5-479f-b744-3b59fe45f365
+# ╠═7e08f9d7-5eba-419f-911e-0c85799f8ebb
+# ╠═2b8fff44-a4b7-4832-8ccb-823a20946838
+# ╠═153db7de-fb01-484f-8e64-702ef31214f4
+# ╠═d1909ff5-5102-42a5-b7c3-e6bb11ffba21
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
