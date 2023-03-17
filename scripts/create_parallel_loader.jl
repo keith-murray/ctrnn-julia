@@ -16,6 +16,45 @@ md"The purpose of this notebook is to create a parallel implementation of Neural
 # ╔═╡ d2de8924-e402-4dc7-ba01-d6e14320f55d
 md"## Setup"
 
+# ╔═╡ b69b333e-31e8-4a9e-94a1-e0f271a086a2
+md"## Create dummy NueralODE"
+
+# ╔═╡ 67b5d5b6-f970-4b8a-9408-7345fc9bb40b
+begin
+	struct NeuralODE{M <: Lux.AbstractExplicitLayer, W <: Lux.AbstractExplicitLayer, F, So, Se, T, K} <: Lux.AbstractExplicitContainerLayer{(:recurrent_model, :input_model)}
+	    recurrent_model::M
+	    input_model::W
+		activation_func::F
+	    solver::So
+	    sensealg::Se
+	    tspan::T
+	    kwargs::K
+	end
+	
+	function NeuralODE(recurrent_model::Lux.AbstractExplicitLayer, input_model::Lux.AbstractExplicitLayer, activation_func=NNlib.tanh_fast, solver=Tsit5(), sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()), tspan=(0.0f0, 1.0f0), kwargs...)
+	    return NeuralODE(recurrent_model, input_model, activation_func, solver, sensealg, tspan, kwargs)
+	end
+	
+	function (n::NeuralODE)(x, ps, st)
+		function make_new_func(func)
+		    function dudt(u, p, t)
+				rec_out, rec_st = n.recurrent_model(n.activation_func.(u), p.recurrent_model, st)
+				in_out, in_st = n.input_model(func(hcat(t)), p.input_model, st)
+		        u_ = -1.0 .* u - rec_out + in_out
+		        return u_
+		    end
+			return dudt
+		end
+		function prob_func(prob, i, repeat)
+			remake(prob, f = ODEFunction{false}(make_new_func(x.funcs[i])))
+		end
+		
+	    prob = ODEProblem{false}(ODEFunction{false}(dudt), x.array, n.tspan, ps)
+		ensemble_prob = EnsembleProblem(prob, prob_func = prob_func)
+	    return solve(ensemble_prob, n.solver, EnsembleThreads(), trajectories = 10; sensealg=n.sensealg, n.kwargs...), st
+	end
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -35,7 +74,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "1f74549ca5475017fdbecf7c972b712a23313af2"
+project_hash = "4ca587efd2d2104f425c19f7c707b25cc3338f71"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1425,5 +1464,7 @@ version = "17.4.0+0"
 # ╟─dd32a5e5-6ffa-4a3c-ba0b-2ca190ebf0b3
 # ╟─d2de8924-e402-4dc7-ba01-d6e14320f55d
 # ╠═76fb7742-ce7f-4134-b762-96e034fa1931
+# ╟─b69b333e-31e8-4a9e-94a1-e0f271a086a2
+# ╠═67b5d5b6-f970-4b8a-9408-7345fc9bb40b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
