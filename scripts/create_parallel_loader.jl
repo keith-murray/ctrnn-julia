@@ -120,6 +120,9 @@ md"## Test ArrayAndFunctionArray"
 # ╔═╡ a158c25a-5491-41b8-aa61-a2f484961efe
 test_input = ArrayAndFunctionArray(ones(5,1), a)
 
+# ╔═╡ 2e732135-65ff-438d-9b58-8d697e51e17c
+md"### Test with no chain"
+
 # ╔═╡ 34186990-fb0c-4e01-9037-510f83b7bc56
 function create_no_chain_NODE_model()
     model = NeuralODE(Dense(5,5, use_bias=false), Dense(1,5,))
@@ -137,8 +140,42 @@ model_no_chain, ps_no_chain, st_chain = create_no_chain_NODE_model()
 # ╔═╡ f5f9bde5-e510-4519-94e3-b2e1d142d02e
 output_no_chain, st_no_chain = Lux.apply(model_no_chain, test_input, ps_no_chain, st_chain)
 
+# ╔═╡ af02309d-7a52-4fc5-9ab6-d76df18edc60
+typeof(output_no_chain)
+
+# ╔═╡ a2426737-259d-4799-b0ab-8ef084a54bd3
+size(output_no_chain[1])
+
 # ╔═╡ 2ca890be-174d-4465-b93a-fef7fd8883e7
-length(output_no_chain)
+size(output_no_chain)
+
+# ╔═╡ 2b3e4f54-bd29-4250-b6cb-8e3d91539290
+Array(output_no_chain)
+
+# ╔═╡ c4b05764-7367-4049-8dd2-1558476c3771
+md"### Test with chain"
+
+# ╔═╡ 4c1d1692-a723-43db-ad85-6ef3c0cf4a97
+function ensemsol_to_array(x::EnsembleSolution)
+	return dropdims(Array(x); dims=2)
+end
+
+# ╔═╡ 57a86f09-9ef5-42e0-842c-75cb284847f9
+function create_w_chain_NODE_model()
+    model = Chain(NeuralODE(Dense(5,5, use_bias=false), Dense(1,5,)), ensemsol_to_array, Dense(5,1))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+    ps, st = Lux.setup(rng, model)
+
+    return model, ps, st
+end
+
+# ╔═╡ 0f18485e-2cb3-4a53-b3e8-68c6f0553b9c
+model_w_chain, ps_w_chain, st_w_chain = create_w_chain_NODE_model()
+
+# ╔═╡ 869145f0-d28a-4516-94d8-89bd25ad8f57
+output_chain, st_out_w_chain = model_w_chain(test_input, ps_w_chain, st_w_chain)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -162,7 +199,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "8c320748d554f5dfa854818006823f6261ce2f85"
+project_hash = "845c2ff9d5812b1ae83f93d08b237602dedd5520"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1563,9 +1600,18 @@ version = "17.4.0+0"
 # ╠═28b21108-1e50-4839-9beb-d45f3047ffcf
 # ╟─4e313631-8f07-4ff3-8ccd-f07e05d2008c
 # ╠═a158c25a-5491-41b8-aa61-a2f484961efe
+# ╟─2e732135-65ff-438d-9b58-8d697e51e17c
 # ╠═34186990-fb0c-4e01-9037-510f83b7bc56
 # ╠═42e53f8c-62f4-46c8-87a5-7bcd26a28a21
 # ╠═f5f9bde5-e510-4519-94e3-b2e1d142d02e
+# ╠═af02309d-7a52-4fc5-9ab6-d76df18edc60
+# ╠═a2426737-259d-4799-b0ab-8ef084a54bd3
 # ╠═2ca890be-174d-4465-b93a-fef7fd8883e7
+# ╠═2b3e4f54-bd29-4250-b6cb-8e3d91539290
+# ╟─c4b05764-7367-4049-8dd2-1558476c3771
+# ╠═4c1d1692-a723-43db-ad85-6ef3c0cf4a97
+# ╠═57a86f09-9ef5-42e0-842c-75cb284847f9
+# ╠═0f18485e-2cb3-4a53-b3e8-68c6f0553b9c
+# ╠═869145f0-d28a-4516-94d8-89bd25ad8f57
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

@@ -30,7 +30,7 @@ md"## Loading MNIST"
 # ╔═╡ 384218c6-455d-4eb1-a454-36f30f94490d
 function loadmnist(batchsize, train_split)
     # Load MNIST: Only 1500 for demonstration purposes
-    N = 1500
+    N = 128
     dataset = MNIST(; split=:train)
     imgs = dataset.features[:, :, 1:N]
     labels_raw = dataset.targets[1:N]
@@ -84,6 +84,21 @@ end
 # ╔═╡ bd6e1f38-0cdd-4123-91c9-5c72d22fd8d3
 md"## Create model"
 
+# ╔═╡ 6b226bf1-c9c0-4d8f-8d02-f93d670656f7
+function create_model_no_out()
+    # Construct the Neural ODE Model
+    model = Chain(FlattenLayer(), Dense(784, 20, tanh),
+                  NeuralODE(Chain(Dense(20, 10, tanh), Dense(10, 10, tanh),
+                                  Dense(10, 20, tanh)); save_everystep=false, reltol=1.0f-3,
+                            abstol=1.0f-3, save_start=false))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+
+    ps, st = Lux.setup(rng, model)
+    return model, ps, st
+end
+
 # ╔═╡ a469dd91-5f8e-4f09-9e1b-e00bb8e4bcac
 function create_model()
     # Construct the Neural ODE Model
@@ -99,6 +114,39 @@ function create_model()
     ps, st = Lux.setup(rng, model)
     return model, ps, st
 end
+
+# ╔═╡ 2704155b-758f-46b0-861d-992747e9c05f
+md"## Probe model"
+
+# ╔═╡ 7ce3014d-ed74-4fce-8cb7-d45ccf81fa15
+train_dataloader, test_dataloader = loadmnist(16, 0.9)
+
+# ╔═╡ 2f185819-71ee-40c8-b0c4-4b951fef483e
+train_dataloader.data[1][:,:,:,1:16]
+
+# ╔═╡ c4940899-b531-4478-8158-c12d1c4a6c2a
+md"### Probe without chain"
+
+# ╔═╡ 5eda7a29-fb53-4243-873e-06601f72a075
+model_no_out, ps_no_out, st_no_out = create_model_no_out()
+
+# ╔═╡ 39860dd7-ab3f-4e96-a483-48e74ee0da1d
+output_no_out, st_out_no_out = model_no_out(train_dataloader.data[1][:,:,:,1:16], ps_no_out, st_no_out)
+
+# ╔═╡ 27c500ea-7f80-4420-9f1e-35e1ef3eb755
+size(output_no_out)
+
+# ╔═╡ 4aa787ce-324b-4bc7-b48b-efaec9232427
+Array(output_no_out)
+
+# ╔═╡ 03d5335e-02bd-473f-a524-3c47497da798
+md"### Probe with chain"
+
+# ╔═╡ 59ad896d-2554-4a1c-9141-e22a0315f441
+model_, ps_, st_ = create_model()
+
+# ╔═╡ ba4b5639-84c9-4805-bebf-3969bc9bedda
+output_, st_out_ = model_(train_dataloader.data[1][:,:,:,1:16], ps_, st_)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1852,6 +1900,18 @@ version = "17.4.0+0"
 # ╟─2d77913f-5f6e-4087-92c2-315c050a4925
 # ╠═6c6eed3e-21a1-4fc1-9715-47e88afd82f2
 # ╟─bd6e1f38-0cdd-4123-91c9-5c72d22fd8d3
+# ╠═6b226bf1-c9c0-4d8f-8d02-f93d670656f7
 # ╠═a469dd91-5f8e-4f09-9e1b-e00bb8e4bcac
+# ╟─2704155b-758f-46b0-861d-992747e9c05f
+# ╠═7ce3014d-ed74-4fce-8cb7-d45ccf81fa15
+# ╠═2f185819-71ee-40c8-b0c4-4b951fef483e
+# ╟─c4940899-b531-4478-8158-c12d1c4a6c2a
+# ╠═5eda7a29-fb53-4243-873e-06601f72a075
+# ╠═39860dd7-ab3f-4e96-a483-48e74ee0da1d
+# ╠═27c500ea-7f80-4420-9f1e-35e1ef3eb755
+# ╠═4aa787ce-324b-4bc7-b48b-efaec9232427
+# ╟─03d5335e-02bd-473f-a524-3c47497da798
+# ╠═59ad896d-2554-4a1c-9141-e22a0315f441
+# ╠═ba4b5639-84c9-4805-bebf-3969bc9bedda
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
