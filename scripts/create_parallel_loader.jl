@@ -5,19 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 76fb7742-ce7f-4134-b762-96e034fa1931
-using Lux, SciMLSensitivity, DifferentialEquations
-
-# ╔═╡ a931bc80-c420-11ed-1c32-bd75c6beed60
-md"# Create parallel function loader"
-
-# ╔═╡ dd32a5e5-6ffa-4a3c-ba0b-2ca190ebf0b3
-md"The purpose of this notebook is to create a parallel implementation of NeuralODE that allows for the loading of multiple different functions at once via 'Parallel Ensemble Simulations' in DifferentialEquations.jl."
-
-# ╔═╡ d2de8924-e402-4dc7-ba01-d6e14320f55d
-md"## Setup"
-
-# ╔═╡ b69b333e-31e8-4a9e-94a1-e0f271a086a2
-md"## Create dummy NueralODE"
+using Lux, SciMLSensitivity, NNlib, DifferentialEquations, Random
 
 # ╔═╡ 67b5d5b6-f970-4b8a-9408-7345fc9bb40b
 begin
@@ -49,22 +37,122 @@ begin
 			remake(prob, f = ODEFunction{false}(make_new_func(x.funcs[i])))
 		end
 		
-	    prob = ODEProblem{false}(ODEFunction{false}(dudt), x.array, n.tspan, ps)
+	    prob = ODEProblem{false}(ODEFunction{false}(make_new_func(x.funcs[1])), x.array, n.tspan, ps)
 		ensemble_prob = EnsembleProblem(prob, prob_func = prob_func)
-	    return solve(ensemble_prob, n.solver, EnsembleThreads(), trajectories = 10; sensealg=n.sensealg, n.kwargs...), st
+	    return solve(ensemble_prob, n.solver, EnsembleThreads(), trajectories = length(x.funcs); sensealg=n.sensealg, n.kwargs...), st
 	end
 end
+
+# ╔═╡ 21d12b19-4e26-4c51-b02f-374b80e03f38
+begin
+	struct FunctionArray{F} <: AbstractArray{F, 1}
+	    data::Array{F, 1}
+	end
+	
+	Base.size(A::FunctionArray) = size(A.data)
+	Base.getindex(A::FunctionArray, i::Int) = A.data[i]
+end
+
+# ╔═╡ a931bc80-c420-11ed-1c32-bd75c6beed60
+md"# Create parallel function loader"
+
+# ╔═╡ dd32a5e5-6ffa-4a3c-ba0b-2ca190ebf0b3
+md"The purpose of this notebook is to create a parallel implementation of NeuralODE that allows for the loading of multiple different functions at once via 'Parallel Ensemble Simulations' in DifferentialEquations.jl."
+
+# ╔═╡ d2de8924-e402-4dc7-ba01-d6e14320f55d
+md"## Setup"
+
+# ╔═╡ b69b333e-31e8-4a9e-94a1-e0f271a086a2
+md"## Create batch NueralODE"
+
+# ╔═╡ 9dcc576c-dd3e-4e60-b3f4-1671f716cbd9
+md"""
+Notice how now the `dudt` function is now created via the `make_new_func`. This allows for the `prob_func` to now create a new `ODEFunction` and `ODEProblem` for each iteration in the `EnsembleProblem`. Hopefully this allows us to batch functions together.
+"""
+
+# ╔═╡ 3f57e5e1-b63e-4ae5-9d29-96cf87002f21
+md"## Create subtype of AbstractArray to store function"
+
+# ╔═╡ adf85134-ca9b-4a73-a936-756e9ed3b156
+md"""
+I'm not entirely sure how the code above works. It was generated through ChatGPT. Let's test it to make sure it works.
+"""
+
+# ╔═╡ d33c08d8-39d6-4eb3-a5ba-542554d55167
+begin
+	f1 = x -> x^2
+	f2 = x -> x^3
+	a = FunctionArray([f1, f2])
+	println(a[1](2))
+	println(typeof(a[1]))
+	println(length(a))
+end
+
+# ╔═╡ 25b1944d-e662-4577-adf3-30d6db4dbf5f
+md"## Create type to store Array and FunctionArray"
+
+# ╔═╡ 28b21108-1e50-4839-9beb-d45f3047ffcf
+begin
+	struct ArrayAndFunctionArray{A <: AbstractArray, B <: FunctionArray}
+	    array::A
+	    funcs::B
+	end
+
+	function Lux.apply(layer::Lux.AbstractExplicitLayer, x::ArrayAndFunctionArray, ps, st::NamedTuple)
+	    y, st = layer(x.array, ps, st)
+	    return ArrayAndFunctionArray(y, x.funcs), st
+	end
+
+	function Lux.apply(layer::Lux.Chain, x::ArrayAndFunctionArray, ps, st::NamedTuple)
+	    y, st = layer(x, ps, st)
+	    return y, st
+	end
+
+	function Lux.apply(layer::NeuralODE, x::ArrayAndFunctionArray, ps, st::NamedTuple)
+    	y, st = layer(x, ps, st)
+    	return y, st
+	end
+end
+
+# ╔═╡ 4e313631-8f07-4ff3-8ccd-f07e05d2008c
+md"## Test ArrayAndFunctionArray"
+
+# ╔═╡ a158c25a-5491-41b8-aa61-a2f484961efe
+test_input = ArrayAndFunctionArray(ones(5,1), a)
+
+# ╔═╡ 34186990-fb0c-4e01-9037-510f83b7bc56
+function create_no_chain_NODE_model()
+    model = NeuralODE(Dense(5,5, use_bias=false), Dense(1,5,))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+    ps, st = Lux.setup(rng, model)
+
+    return model, ps, st
+end
+
+# ╔═╡ 42e53f8c-62f4-46c8-87a5-7bcd26a28a21
+model_no_chain, ps_no_chain, st_chain = create_no_chain_NODE_model()
+
+# ╔═╡ f5f9bde5-e510-4519-94e3-b2e1d142d02e
+output_no_chain, st_no_chain = Lux.apply(model_no_chain, test_input, ps_no_chain, st_chain)
+
+# ╔═╡ 2ca890be-174d-4465-b93a-fef7fd8883e7
+length(output_no_chain)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
+NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SciMLSensitivity = "1ed8b502-d754-442c-8d5d-10ac956f44a1"
 
 [compat]
 DifferentialEquations = "~7.7.0"
 Lux = "~0.4.44"
+NNlib = "~0.8.19"
 SciMLSensitivity = "~7.25.0"
 """
 
@@ -74,7 +162,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "4ca587efd2d2104f425c19f7c707b25cc3338f71"
+project_hash = "8c320748d554f5dfa854818006823f6261ce2f85"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1466,5 +1554,18 @@ version = "17.4.0+0"
 # ╠═76fb7742-ce7f-4134-b762-96e034fa1931
 # ╟─b69b333e-31e8-4a9e-94a1-e0f271a086a2
 # ╠═67b5d5b6-f970-4b8a-9408-7345fc9bb40b
+# ╟─9dcc576c-dd3e-4e60-b3f4-1671f716cbd9
+# ╟─3f57e5e1-b63e-4ae5-9d29-96cf87002f21
+# ╠═21d12b19-4e26-4c51-b02f-374b80e03f38
+# ╟─adf85134-ca9b-4a73-a936-756e9ed3b156
+# ╠═d33c08d8-39d6-4eb3-a5ba-542554d55167
+# ╟─25b1944d-e662-4577-adf3-30d6db4dbf5f
+# ╠═28b21108-1e50-4839-9beb-d45f3047ffcf
+# ╟─4e313631-8f07-4ff3-8ccd-f07e05d2008c
+# ╠═a158c25a-5491-41b8-aa61-a2f484961efe
+# ╠═34186990-fb0c-4e01-9037-510f83b7bc56
+# ╠═42e53f8c-62f4-46c8-87a5-7bcd26a28a21
+# ╠═f5f9bde5-e510-4519-94e3-b2e1d142d02e
+# ╠═2ca890be-174d-4465-b93a-fef7fd8883e7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
