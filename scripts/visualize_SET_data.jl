@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 07d51210-0244-40a2-8af1-bdc7d9df416f
-using CSV, DataFrames, CairoMakie, AlgebraOfGraphics
+using CSV, DataFrames, CairoMakie, AlgebraOfGraphics, Random
 
 # ╔═╡ 14bbff00-bac2-11ed-385c-710cd8b3eed9
 md"# Visualize SET data"
@@ -21,6 +21,9 @@ The purpose of this notebook is to:
 
 # ╔═╡ 39d4d238-2e4b-4d26-a8dd-050dd67f2644
 md"## Setup"
+
+# ╔═╡ 19a37509-7c81-40ca-8dfb-7ec152bd2f9b
+Random.seed!(1234)
 
 # ╔═╡ c4a95a0a-2362-44f4-a146-31f1311e00de
 md"## Load data"
@@ -171,6 +174,7 @@ AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 AlgebraOfGraphics = "~0.6.14"
@@ -185,7 +189,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "81600b36263c269b4e91830190dccc17bee0cb32"
+project_hash = "1c81aef3bfd92fa4939f587a198d90f4aaab6661"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1563,6 +1567,7 @@ version = "3.5.0+0"
 # ╟─0774d747-7fea-4d71-8cf7-67073180e50e
 # ╟─39d4d238-2e4b-4d26-a8dd-050dd67f2644
 # ╠═07d51210-0244-40a2-8af1-bdc7d9df416f
+# ╠═19a37509-7c81-40ca-8dfb-7ec152bd2f9b
 # ╟─c4a95a0a-2362-44f4-a146-31f1311e00de
 # ╟─52eff368-0c25-4015-9883-5587d9982d4e
 # ╟─2cd7a758-e399-4f1d-a233-149e7c02ce72
