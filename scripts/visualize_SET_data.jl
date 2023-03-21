@@ -260,7 +260,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "b9afe1c5eacbf9d53c0f8d7750b144e22dedf2fd"
+project_hash = "4de5fd76898b2a28ca4d40c94ed5e746d4a8e3be"
 
 [[deps.AbstractAlgebra]]
 deps = ["GroupsCore", "InteractiveUtils", "LinearAlgebra", "MacroTools", "Markdown", "Random", "RandomExtensions", "SparseArrays", "Test"]
