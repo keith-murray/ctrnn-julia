@@ -207,6 +207,44 @@ trial_model()
 # ╔═╡ 367d9dc8-94f7-43a2-b615-859ffa524499
 md"Aye yo! The system works. What can we say except praise Julia."
 
+# ╔═╡ 6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
+md"## Define training regime"
+
+# ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
+function train()
+    model, ps, st = create_model()
+	batch = 4
+
+    # Training
+	data = loadSETdata()
+	IC = ones(5)
+	
+    opt = Optimisers.ADAM(0.001f0)
+    st_opt = Optimisers.setup(opt, ps)
+
+    ### Warmup the Model
+	func_array, y_expected = constructSetbatch(batch, data)
+	x = ArrayAndFunctionArray(IC, func_array)
+    loss(x, y_expected, model, ps, st)
+    (l, _), back = pullback(p -> loss(x, y_expected, model, p, st), ps)
+    back((one(l), nothing))
+
+    ### Lets train the model
+    nepochs = 10
+    for epoch in 1:nepochs
+        stime = time()
+		func_array, y_expected = constructSetbatch(batch, data)
+		x = ArrayAndFunctionArray(IC, func_array)
+		(l, st), back = pullback(p -> loss(x, y_expected, model, p, st), ps)
+		### We need to add `nothing`s equal to the number of returned values - 1
+		gs = back((one(l), nothing))[1]
+		st_opt, ps = Optimisers.update(st_opt, ps, gs)
+        ttime = time() - stime
+
+        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, batch, data, IC) * 100; digits=2))% \t ")
+    end
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -1701,5 +1739,7 @@ version = "17.4.0+0"
 # ╠═a7113390-2c98-4dc6-8ac7-5971e8b02e3d
 # ╠═39731a08-5628-43c8-aa69-6b6be730e5dd
 # ╟─367d9dc8-94f7-43a2-b615-859ffa524499
+# ╟─6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
+# ╠═a16b8ad5-02cf-4a81-a48e-fb0321440843
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
