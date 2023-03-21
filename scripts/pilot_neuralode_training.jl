@@ -22,7 +22,7 @@ begin
 	struct NeuralODE{M <: Lux.AbstractExplicitLayer, W <: Lux.AbstractExplicitLayer, tau, F, So, Se, T, K} <: Lux.AbstractExplicitContainerLayer{(:recurrent_model, :input_model)}
 	    recurrent_model::M
 	    input_model::W
-		matrix_tau::tau
+		tau_vector::tau
 		activation_func::F
 	    solver::So
 	    sensealg::Se
@@ -30,25 +30,25 @@ begin
 	    kwargs::K
 	end
 	
-	function NeuralODE(recurrent_model::Lux.AbstractExplicitLayer, input_model::Lux.AbstractExplicitLayer, matrix_tau; activation_func=NNlib.tanh_fast, solver=Euler(), sensealg=ReverseDiffAdjoint(), tspan=(0.0f0, 1.0f0), kwargs...)
-	    return NeuralODE(recurrent_model, input_model, matrix_tau, activation_func, solver, sensealg, tspan, kwargs)
+	function NeuralODE(recurrent_model::Lux.AbstractExplicitLayer, input_model::Lux.AbstractExplicitLayer, tau_vector; activation_func=NNlib.tanh_fast, solver=Euler(), sensealg=ReverseDiffAdjoint(), tspan=(0.0f0, 1.0f0), kwargs...)
+	    return NeuralODE(recurrent_model, input_model, tau_vector, activation_func, solver, sensealg, tspan, kwargs)
 	end
 	
 	function (n::NeuralODE)(x, ps, st)
 		function make_new_func(func)
 		    function dudt(u, p, t)
 				rec_out, rec_st = n.recurrent_model(n.activation_func.(u), p.recurrent_model, st)
-				in_out, in_st = n.input_model(func(hcat(t)), p.input_model, st)
-		        u_ = -1.0 .* u - rec_out + in_out
+				in_out, in_st = n.input_model(func(t), p.input_model, st)
+		        u_ = (1/n.tau_vector).*(-1.0 .* u - rec_out + in_out)
 		        return u_
 		    end
 			return dudt
 		end
 		function prob_func(prob, i, repeat)
-			remake(prob, f = ODEFunction{false}(make_new_func(x.funcs[i]); mass_matrix=n.matrix_tau))
+			remake(prob, f = ODEFunction{false}(make_new_func(x.funcs[i])))
 		end
 		
-	    prob = ODEProblem{false}(ODEFunction{false}(make_new_func(x.funcs[1]); mass_matrix=n.matrix_tau), x.array, n.tspan, ps)
+	    prob = ODEProblem{false}(ODEFunction{false}(make_new_func(x.funcs[1])), x.array, n.tspan, ps)
 		ensemble_prob = EnsembleProblem(prob, prob_func = prob_func)
 	    return solve(ensemble_prob, n.solver, EnsembleThreads(), trajectories = length(x.funcs); sensealg=n.sensealg, n.kwargs...), st
 	end
@@ -56,12 +56,12 @@ end
 
 # ╔═╡ 25083edd-4882-457a-904e-989722b68104
 function ensemsol_to_array(x::EnsembleSolution)
-	return dropdims(Array(x); dims=(2,3))
+	return dropdims(Array(x); dims=2)
 end
 
 # ╔═╡ 999ddd7b-3f3b-4143-a91a-565fdcb78b8c
 function create_model(neurons)
-    model = Chain(NeuralODE(Dense(neurons,neurons, use_bias=false), Dense(3,neurons,), 0.01*I; saveat=0.01, save_everystep=false, save_start=false), ensemsol_to_array, Dense(neurons,1))
+    model = Chain(NeuralODE(Dense(neurons,neurons, use_bias=false), Dense(3,neurons,), 0.01; dt=0.01, save_everystep=false, save_start=false), ensemsol_to_array, Dense(neurons,1))
 
     rng = Random.default_rng()
     Random.seed!(rng, 0)
@@ -163,7 +163,7 @@ function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64
 	for i in 1:batch
 		y = rand([1,2])
 		SET_num = rand(data[y])
-		append!(funcs, make_signal(SET_num, (0.1,0.86), 0.1, 0.04))
+		push!(funcs, make_signal(SET_num, (0.1,0.86), 0.1, 0.04))
 		y_expected[i] = y - 1.0
 	end
 	func_array = FunctionArray(funcs)
@@ -193,12 +193,19 @@ function test_mse(model, ps, st, batch, data, IC)
 end
 
 # ╔═╡ a7113390-2c98-4dc6-8ac7-5971e8b02e3d
-begin
+function trial_model()
 	model, ps, st = create_model(5)
 	IC = ones(5)
 	data = loadSETdata()
 	mse = test_mse(model, ps, st, 4, data, IC)
+	return mse
 end
+
+# ╔═╡ 39731a08-5628-43c8-aa69-6b6be730e5dd
+trial_model()
+
+# ╔═╡ 367d9dc8-94f7-43a2-b615-859ffa524499
+md"Aye yo! The system works. What can we say except praise Julia."
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -236,7 +243,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "7441adb30367576858a67263d0cf0e5e05386609"
+project_hash = "d86a76d2e21badb5c9e8033fc70d8c4a48bb11f8"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1692,5 +1699,7 @@ version = "17.4.0+0"
 # ╠═dba32c15-46e5-4f78-8e29-55e9d298feff
 # ╠═9e7233a5-3993-40f2-b2f5-da08f1c30653
 # ╠═a7113390-2c98-4dc6-8ac7-5971e8b02e3d
+# ╠═39731a08-5628-43c8-aa69-6b6be730e5dd
+# ╟─367d9dc8-94f7-43a2-b615-859ffa524499
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
