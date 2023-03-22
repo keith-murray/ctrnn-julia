@@ -118,7 +118,7 @@ function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64
 		y = rand([1,2])
 		SET_num = rand(data[y])
 		push!(funcs, make_signal(SET_num, (0.1,0.86), 0.1, 0.04))
-		y_expected[i] = y - 1.0
+		y_expected[i] = 2.0*y - 3.0
 	end
 	func_array = FunctionArray(funcs)
 	return func_array, y_expected
@@ -213,7 +213,7 @@ md"## Define training regime"
 
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
-	batch = 8
+	batch = 64
 	neurons = 100
     nepochs = 100
 	
@@ -223,7 +223,7 @@ function train()
 	data = loadSETdata()
 	IC = ones(neurons)
 	
-    opt = Optimisers.ADAM(0.01f0)
+    opt = Optimisers.ADAM(0.1f0)
     st_opt = Optimisers.setup(opt, ps)
 
     ### Warmup the Model
