@@ -100,33 +100,15 @@ function create_model(neurons)
     rng = Random.default_rng()
     Random.seed!(rng, 0)
     ps, st = Lux.setup(rng, model)
-
+	ps = ComponentArray(ps)
+	
     return model, ps, st
 end
 
 # ╔═╡ 6fe769a6-b66e-417c-a2ba-871e9d867323
-begin
-	struct FunctionArray{F} <: AbstractArray{F, 1}
-	    data::Array{F, 1}
-	end
-	
-	Base.size(A::FunctionArray) = size(A.data)
-	Base.getindex(A::FunctionArray, i::Int) = A.data[i]
+struct FunctionArray{F} <: AbstractArray{F, 1}
+	data::Array{F, 1}
 end
-
-# ╔═╡ 8b7e6b20-c781-11ed-3962-551902dce2c3
-md"# Pilot NeuralODE training"
-
-# ╔═╡ a9fae9fc-a69c-43ed-9ce7-fd35016ea11d
-md"""
-The purpose of this notebook is to batch train a NeuralODE with SET data. The only rule to be used will be the normal rules of SET.
-"""
-
-# ╔═╡ 5709ca41-da5b-417a-b7a2-5972b3100897
-md"## Setup"
-
-# ╔═╡ 3bcf9a51-93a4-401d-919b-26b25b1666df
-md"## Load SET data"
 
 # ╔═╡ d77e83f2-93ae-4427-9bb7-295d89e6ee6d
 function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64}})
@@ -142,18 +124,16 @@ function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64
 	return func_array, y_expected
 end
 
-# ╔═╡ 3fcf3075-54ff-4be5-96d0-b0f64c5ef5e1
-md"## Define NeuralODE layer"
-
-# ╔═╡ 0eb0f5c0-b61f-45a7-8f95-bb7561b7665c
-md"## Define input types"
+# ╔═╡ 17931dd0-d757-4cd0-b414-e9b3e9875285
+struct ArrayAndFunctionArray{A <: AbstractArray, B <: FunctionArray}
+	array::A
+	funcs::B
+end
 
 # ╔═╡ 4b5b0d1e-90cf-4bfe-91f1-dcde73edd0cb
 begin
-	struct ArrayAndFunctionArray{A <: AbstractArray, B <: FunctionArray}
-	    array::A
-	    funcs::B
-	end
+	Base.size(A::FunctionArray) = size(A.data)
+	Base.getindex(A::FunctionArray, i::Int) = A.data[i]
 
 	function Lux.apply(layer::Lux.AbstractExplicitLayer, x::ArrayAndFunctionArray, ps, st::NamedTuple)
 	    y, st = layer(x.array, ps, st)
@@ -170,6 +150,26 @@ begin
     	return y, st
 	end
 end
+
+# ╔═╡ 8b7e6b20-c781-11ed-3962-551902dce2c3
+md"# Pilot NeuralODE training"
+
+# ╔═╡ a9fae9fc-a69c-43ed-9ce7-fd35016ea11d
+md"""
+The purpose of this notebook is to batch train a NeuralODE with SET data. The only rule to be used will be the normal rules of SET.
+"""
+
+# ╔═╡ 5709ca41-da5b-417a-b7a2-5972b3100897
+md"## Setup"
+
+# ╔═╡ 3bcf9a51-93a4-401d-919b-26b25b1666df
+md"## Load SET data"
+
+# ╔═╡ 3fcf3075-54ff-4be5-96d0-b0f64c5ef5e1
+md"## Define NeuralODE layer"
+
+# ╔═╡ 0eb0f5c0-b61f-45a7-8f95-bb7561b7665c
+md"## Define input types"
 
 # ╔═╡ 98bb16ef-396c-48b3-a091-ddd975ca43fc
 md"## Define utility functions"
@@ -213,14 +213,14 @@ md"## Define training regime"
 
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
-    model, ps, st = create_model(5)
-	batch = 4
+    model, ps, st = create_model(100)
+	batch = 8
 
     # Training
 	data = loadSETdata()
-	IC = ones(5)
+	IC = ones(100)
 	
-    opt = Optimisers.ADAM(0.001f0)
+    opt = Optimisers.ADAM(0.01f0)
     st_opt = Optimisers.setup(opt, ps)
 
     ### Warmup the Model
@@ -242,42 +242,12 @@ function train()
 		st_opt, ps = Optimisers.update(st_opt, ps, gs)
         ttime = time() - stime
 
-        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, batch, data, IC) * 100; digits=2))% \t ")
+        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, batch, data, IC); digits=2)) \t ")
     end
 end
 
-# ╔═╡ 64beb898-5e68-464f-8c0f-a225e1003511
-model, ps, st = create_model(5)
-
-# ╔═╡ 47f19903-8a89-4fb0-bb11-37eae6398cac
-batch = 4
-
-# ╔═╡ ff9a388e-9a99-47ec-8efa-b294e6807243
-data = loadSETdata()
-
-# ╔═╡ c33d23c6-2667-45fb-8c76-712285c9581c
-IC = ones(5)
-
-# ╔═╡ c4c472fb-fdd1-4458-b19f-501d476b0aaf
-opt = Optimisers.ADAM(0.001f0)
-
-# ╔═╡ 967dbe50-f05b-4e23-94a3-78d1ccd52d2a
-st_opt = Optimisers.setup(opt, ps)
-
-# ╔═╡ a5c4b4c5-2030-4126-9e8f-35194fe4a7b6
-func_array, y_expected = constructSetbatch(batch, data)
-
-# ╔═╡ d5bfef8e-0657-4c43-ba52-81cdf4b380da
-x = ArrayAndFunctionArray(IC, func_array)
-
-# ╔═╡ cb7c7a40-bd51-4045-a6cf-c9aa8154c23f
-loss(x, y_expected, model, ps, st)
-
-# ╔═╡ c910a255-6683-4d56-a05e-aa771e7986e0
-(l, _), back = pullback(p -> loss(x, y_expected, model, p, st), ps)
-
-# ╔═╡ 25fc3867-1bdd-4cc2-be3c-ab5795e43a76
-back((one(l), nothing))
+# ╔═╡ c3bdb210-65c8-4124-ba98-bf41e4f8101b
+train()
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1764,6 +1734,7 @@ version = "17.4.0+0"
 # ╠═999ddd7b-3f3b-4143-a91a-565fdcb78b8c
 # ╟─0eb0f5c0-b61f-45a7-8f95-bb7561b7665c
 # ╠═6fe769a6-b66e-417c-a2ba-871e9d867323
+# ╠═17931dd0-d757-4cd0-b414-e9b3e9875285
 # ╠═4b5b0d1e-90cf-4bfe-91f1-dcde73edd0cb
 # ╟─98bb16ef-396c-48b3-a091-ddd975ca43fc
 # ╠═ec541eb5-3a17-4abe-a137-8c0137313ac2
@@ -1774,16 +1745,6 @@ version = "17.4.0+0"
 # ╟─367d9dc8-94f7-43a2-b615-859ffa524499
 # ╟─6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
 # ╠═a16b8ad5-02cf-4a81-a48e-fb0321440843
-# ╠═64beb898-5e68-464f-8c0f-a225e1003511
-# ╠═47f19903-8a89-4fb0-bb11-37eae6398cac
-# ╠═ff9a388e-9a99-47ec-8efa-b294e6807243
-# ╠═c33d23c6-2667-45fb-8c76-712285c9581c
-# ╠═c4c472fb-fdd1-4458-b19f-501d476b0aaf
-# ╠═967dbe50-f05b-4e23-94a3-78d1ccd52d2a
-# ╠═a5c4b4c5-2030-4126-9e8f-35194fe4a7b6
-# ╠═d5bfef8e-0657-4c43-ba52-81cdf4b380da
-# ╠═cb7c7a40-bd51-4045-a6cf-c9aa8154c23f
-# ╠═c910a255-6683-4d56-a05e-aa771e7986e0
-# ╠═25fc3867-1bdd-4cc2-be3c-ab5795e43a76
+# ╠═c3bdb210-65c8-4124-ba98-bf41e4f8101b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
