@@ -213,12 +213,15 @@ md"## Define training regime"
 
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
-    model, ps, st = create_model(100)
 	batch = 8
+	neurons = 100
+    nepochs = 100
+	
+    model, ps, st = create_model(neurons)
 
     # Training
 	data = loadSETdata()
-	IC = ones(100)
+	IC = ones(neurons)
 	
     opt = Optimisers.ADAM(0.01f0)
     st_opt = Optimisers.setup(opt, ps)
@@ -231,7 +234,6 @@ function train()
     back((one(l), nothing))
 
     ### Lets train the model
-    nepochs = 10
     for epoch in 1:nepochs
         stime = time()
 		func_array, y_expected = constructSetbatch(batch, data)
