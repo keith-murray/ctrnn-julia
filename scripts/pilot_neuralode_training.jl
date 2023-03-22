@@ -17,29 +17,57 @@ function loadSETdata()
 	return rejected, accepted
 end
 
+# ╔═╡ 5e3bac12-77cb-455d-8bf9-f441bacd2a87
+function make_signal(SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Float64, pulse_width::Float64)
+	
+    SET_string = reverse(digits(SET))
+	SET_length = length(SET_string)
+	zero_string = zeros(Int64, SET_length)
+	signal_values = [zero_string SET_string]'[:]
+	append!(signal_values, zeros(Int64, 1))
+	
+	signal_begin = sort(rand(SET_length).*(lag[2]-lag[1]).+lag[1])
+	signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
+	while minimum(signal_gaps) < min_pulse_gap
+		signal_begin = sort(rand(SET_length).*(lag[2]-lag[1]).+lag[1])
+		signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
+	end
+	
+	signal_end = signal_begin.+pulse_width
+	signal_locs = [signal_begin signal_end]'[:]
+	
+	function signal(t)
+		val = signal_values[searchsortedfirst(signal_locs, t)]
+		vec = zeros(3)
+		if val != 0
+			vec[val] = 1
+		end
+		return vec
+	end
+	return signal
+end
+
 # ╔═╡ 4e7bf409-92b7-4849-b05b-d902bb812143
 begin
-	struct NeuralODE{M <: Lux.AbstractExplicitLayer, W <: Lux.AbstractExplicitLayer, tau, F, So, Se, T, K} <: Lux.AbstractExplicitContainerLayer{(:recurrent_model, :input_model)}
-	    recurrent_model::M
-	    input_model::W
-		tau_vector::tau
-		activation_func::F
+	struct NeuralODE{M <: Lux.AbstractExplicitLayer, So, Se, T, K} <:
+	       Lux.AbstractExplicitContainerLayer{(:model,)}
+	    model::M
 	    solver::So
 	    sensealg::Se
 	    tspan::T
 	    kwargs::K
 	end
 	
-	function NeuralODE(recurrent_model::Lux.AbstractExplicitLayer, input_model::Lux.AbstractExplicitLayer, tau_vector; activation_func=NNlib.tanh_fast, solver=Euler(), sensealg=ReverseDiffAdjoint(), tspan=(0.0f0, 1.0f0), kwargs...)
-	    return NeuralODE(recurrent_model, input_model, tau_vector, activation_func, solver, sensealg, tspan, kwargs)
+	function NeuralODE(model::Lux.AbstractExplicitLayer; solver=Euler(),
+	                   sensealg=ReverseDiffAdjoint(),
+	                   tspan=(0.0f0, 1.0f0), kwargs...)
+	    return NeuralODE(model, solver, sensealg, tspan, kwargs)
 	end
 	
 	function (n::NeuralODE)(x, ps, st)
 		function make_new_func(func)
 		    function dudt(u, p, t)
-				rec_out, rec_st = n.recurrent_model(n.activation_func.(u), p.recurrent_model, st)
-				in_out, in_st = n.input_model(func(t), p.input_model, st)
-		        u_ = (1/n.tau_vector).*(-1.0 .* u - rec_out + in_out)
+		        u_, st = n.model((u, func(t)), p, st)
 		        return u_
 		    end
 			return dudt
@@ -61,7 +89,13 @@ end
 
 # ╔═╡ 999ddd7b-3f3b-4143-a91a-565fdcb78b8c
 function create_model(neurons)
-    model = Chain(NeuralODE(Dense(neurons,neurons, use_bias=false), Dense(3,neurons,), 0.01; dt=0.01, save_everystep=false, save_start=false), ensemsol_to_array, Dense(neurons,1))
+	invtau = 0.01
+    model = Chain(NeuralODE(Parallel(+,
+									 Chain(SkipConnection(Chain(x -> NNlib.tanh_fast.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
+									 Chain(Dense(3,neurons), x -> invtau.*x)); 
+						    dt=0.01, save_everystep=false, save_start=false), 
+				  ensemsol_to_array, 
+				  Dense(neurons,1))
 
     rng = Random.default_rng()
     Random.seed!(rng, 0)
@@ -94,6 +128,20 @@ md"## Setup"
 # ╔═╡ 3bcf9a51-93a4-401d-919b-26b25b1666df
 md"## Load SET data"
 
+# ╔═╡ d77e83f2-93ae-4427-9bb7-295d89e6ee6d
+function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64}})
+	funcs = []
+	y_expected = zeros(batch)
+	for i in 1:batch
+		y = rand([1,2])
+		SET_num = rand(data[y])
+		push!(funcs, make_signal(SET_num, (0.1,0.86), 0.1, 0.04))
+		y_expected[i] = y - 1.0
+	end
+	func_array = FunctionArray(funcs)
+	return func_array, y_expected
+end
+
 # ╔═╡ 3fcf3075-54ff-4be5-96d0-b0f64c5ef5e1
 md"## Define NeuralODE layer"
 
@@ -121,53 +169,6 @@ begin
     	y, st = layer(x, ps, st)
     	return y, st
 	end
-end
-
-# ╔═╡ fb8f3913-6b00-4570-8e98-b307378dacd4
-md"## Define SET loader"
-
-# ╔═╡ 5e3bac12-77cb-455d-8bf9-f441bacd2a87
-function make_signal(SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Float64, pulse_width::Float64)
-	
-    SET_string = reverse(digits(SET))
-	SET_length = length(SET_string)
-	zero_string = zeros(Int64, SET_length)
-	signal_values = [zero_string SET_string]'[:]
-	append!(signal_values, zeros(Int64, 1))
-	
-	signal_begin = sort(rand(SET_length).*(lag[2]-lag[1]).+lag[1])
-	signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
-	while minimum(signal_gaps) < min_pulse_gap
-		signal_begin = sort(rand(SET_length).*(lag[2]-lag[1]).+lag[1])
-		signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
-	end
-	
-	signal_end = signal_begin.+pulse_width
-	signal_locs = [signal_begin signal_end]'[:]
-	
-	function signal(t)
-		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = zeros(3)
-		if val != 0
-			vec[val] = 1
-		end
-		return vec
-	end
-	return signal
-end
-
-# ╔═╡ d77e83f2-93ae-4427-9bb7-295d89e6ee6d
-function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64}})
-	funcs = []
-	y_expected = zeros(batch)
-	for i in 1:batch
-		y = rand([1,2])
-		SET_num = rand(data[y])
-		push!(funcs, make_signal(SET_num, (0.1,0.86), 0.1, 0.04))
-		y_expected[i] = y - 1.0
-	end
-	func_array = FunctionArray(funcs)
-	return func_array, y_expected
 end
 
 # ╔═╡ 98bb16ef-396c-48b3-a091-ddd975ca43fc
@@ -212,7 +213,7 @@ md"## Define training regime"
 
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
-    model, ps, st = create_model()
+    model, ps, st = create_model(5)
 	batch = 4
 
     # Training
@@ -244,6 +245,39 @@ function train()
         println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, batch, data, IC) * 100; digits=2))% \t ")
     end
 end
+
+# ╔═╡ 64beb898-5e68-464f-8c0f-a225e1003511
+model, ps, st = create_model(5)
+
+# ╔═╡ 47f19903-8a89-4fb0-bb11-37eae6398cac
+batch = 4
+
+# ╔═╡ ff9a388e-9a99-47ec-8efa-b294e6807243
+data = loadSETdata()
+
+# ╔═╡ c33d23c6-2667-45fb-8c76-712285c9581c
+IC = ones(5)
+
+# ╔═╡ c4c472fb-fdd1-4458-b19f-501d476b0aaf
+opt = Optimisers.ADAM(0.001f0)
+
+# ╔═╡ 967dbe50-f05b-4e23-94a3-78d1ccd52d2a
+st_opt = Optimisers.setup(opt, ps)
+
+# ╔═╡ a5c4b4c5-2030-4126-9e8f-35194fe4a7b6
+func_array, y_expected = constructSetbatch(batch, data)
+
+# ╔═╡ d5bfef8e-0657-4c43-ba52-81cdf4b380da
+x = ArrayAndFunctionArray(IC, func_array)
+
+# ╔═╡ cb7c7a40-bd51-4045-a6cf-c9aa8154c23f
+loss(x, y_expected, model, ps, st)
+
+# ╔═╡ c910a255-6683-4d56-a05e-aa771e7986e0
+(l, _), back = pullback(p -> loss(x, y_expected, model, p, st), ps)
+
+# ╔═╡ 25fc3867-1bdd-4cc2-be3c-ab5795e43a76
+back((one(l), nothing))
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1722,6 +1756,8 @@ version = "17.4.0+0"
 # ╠═dea87669-3e2b-47ce-bbc0-95399f5c71fb
 # ╟─3bcf9a51-93a4-401d-919b-26b25b1666df
 # ╠═d188be7a-e414-4fc5-ba6f-d89bacaf69f3
+# ╠═5e3bac12-77cb-455d-8bf9-f441bacd2a87
+# ╠═d77e83f2-93ae-4427-9bb7-295d89e6ee6d
 # ╟─3fcf3075-54ff-4be5-96d0-b0f64c5ef5e1
 # ╠═4e7bf409-92b7-4849-b05b-d902bb812143
 # ╠═25083edd-4882-457a-904e-989722b68104
@@ -1729,9 +1765,6 @@ version = "17.4.0+0"
 # ╟─0eb0f5c0-b61f-45a7-8f95-bb7561b7665c
 # ╠═6fe769a6-b66e-417c-a2ba-871e9d867323
 # ╠═4b5b0d1e-90cf-4bfe-91f1-dcde73edd0cb
-# ╟─fb8f3913-6b00-4570-8e98-b307378dacd4
-# ╠═5e3bac12-77cb-455d-8bf9-f441bacd2a87
-# ╠═d77e83f2-93ae-4427-9bb7-295d89e6ee6d
 # ╟─98bb16ef-396c-48b3-a091-ddd975ca43fc
 # ╠═ec541eb5-3a17-4abe-a137-8c0137313ac2
 # ╠═dba32c15-46e5-4f78-8e29-55e9d298feff
@@ -1741,5 +1774,16 @@ version = "17.4.0+0"
 # ╟─367d9dc8-94f7-43a2-b615-859ffa524499
 # ╟─6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
 # ╠═a16b8ad5-02cf-4a81-a48e-fb0321440843
+# ╠═64beb898-5e68-464f-8c0f-a225e1003511
+# ╠═47f19903-8a89-4fb0-bb11-37eae6398cac
+# ╠═ff9a388e-9a99-47ec-8efa-b294e6807243
+# ╠═c33d23c6-2667-45fb-8c76-712285c9581c
+# ╠═c4c472fb-fdd1-4458-b19f-501d476b0aaf
+# ╠═967dbe50-f05b-4e23-94a3-78d1ccd52d2a
+# ╠═a5c4b4c5-2030-4126-9e8f-35194fe4a7b6
+# ╠═d5bfef8e-0657-4c43-ba52-81cdf4b380da
+# ╠═cb7c7a40-bd51-4045-a6cf-c9aa8154c23f
+# ╠═c910a255-6683-4d56-a05e-aa771e7986e0
+# ╠═25fc3867-1bdd-4cc2-be3c-ab5795e43a76
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
