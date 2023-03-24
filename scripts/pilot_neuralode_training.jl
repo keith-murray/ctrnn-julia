@@ -91,7 +91,7 @@ end
 function create_model(neurons)
 	invtau = 0.01
     model = Chain(NeuralODE(Parallel(+,
-									 Chain(SkipConnection(Chain(x -> NNlib.tanh_fast.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
+									 Chain(SkipConnection(Chain(x -> NNlib.softplus.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
 									 Chain(Dense(3,neurons), x -> invtau.*x)); 
 						    dt=0.01, save_everystep=false, save_start=false), 
 				  ensemsol_to_array, 
@@ -175,7 +175,7 @@ md"## Define input types"
 md"## Define utility functions"
 
 # ╔═╡ ec541eb5-3a17-4abe-a137-8c0137313ac2
-meansquarederror(y_pred, y) = mean((y_pred .- y).^2)
+meansquarederror(y_pred, y) =  mean(abs2, y_pred .- y)
 
 # ╔═╡ dba32c15-46e5-4f78-8e29-55e9d298feff
 function loss(x, y, model, ps, st)
@@ -250,6 +250,32 @@ end
 
 # ╔═╡ c3bdb210-65c8-4124-ba98-bf41e4f8101b
 train()
+
+# ╔═╡ 09242d0f-290f-449e-8c6c-7553f02c3e84
+md"## Experiment with parameter initialization"
+
+# ╔═╡ 6f028332-4c8c-4daa-8c4b-330a7694df99
+function create_model_experiment_ps(neurons)
+	invtau = 0.01
+    model = Chain(NeuralODE(Parallel(+,
+									 Chain(SkipConnection(Chain(x -> NNlib.softplus.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
+									 Chain(Dense(3,neurons), x -> invtau.*x)); 
+						    dt=0.01, save_everystep=false, save_start=false), 
+				  ensemsol_to_array, 
+				  Dense(neurons,1))
+
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
+    ps, st = Lux.setup(rng, model)
+	
+    return ps
+end
+
+# ╔═╡ 104c2333-67e2-4bac-a268-c934cd6ff132
+ps = create_model_experiment_ps(100)
+
+# ╔═╡ 20219ddb-eba9-47b2-a6ab-87e4acef31bf
+ps.layer_1.layer_1.layer_1.layer_2.weight
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1748,5 +1774,9 @@ version = "17.4.0+0"
 # ╟─6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
 # ╠═a16b8ad5-02cf-4a81-a48e-fb0321440843
 # ╠═c3bdb210-65c8-4124-ba98-bf41e4f8101b
+# ╟─09242d0f-290f-449e-8c6c-7553f02c3e84
+# ╠═6f028332-4c8c-4daa-8c4b-330a7694df99
+# ╠═104c2333-67e2-4bac-a268-c934cd6ff132
+# ╠═20219ddb-eba9-47b2-a6ab-87e4acef31bf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
