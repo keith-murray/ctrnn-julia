@@ -18,7 +18,7 @@ function loadSETdata()
 end
 
 # ╔═╡ 5e3bac12-77cb-455d-8bf9-f441bacd2a87
-function make_signal(SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Float64, pulse_width::Float64)
+function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Float64, pulse_width::Float64)
 	
     SET_string = reverse(digits(SET))
 	SET_length = length(SET_string)
@@ -26,10 +26,10 @@ function make_signal(SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Fl
 	signal_values = [zero_string SET_string]'[:]
 	append!(signal_values, zeros(Int64, 1))
 	
-	signal_begin = sort(rand(SET_length).*(lag[2]-lag[1]).+lag[1])
+	signal_begin = sort(rand(rng, SET_length).*(lag[2]-lag[1]).+lag[1])
 	signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
 	while minimum(signal_gaps) < min_pulse_gap
-		signal_begin = sort(rand(SET_length).*(lag[2]-lag[1]).+lag[1])
+		signal_begin = sort(rand(rng, SET_length).*(lag[2]-lag[1]).+lag[1])
 		signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
 	end
 	
@@ -38,9 +38,9 @@ function make_signal(SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Fl
 	
 	function signal(t)
 		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = zeros(3)
+		vec = Lux.zeros32(rng, 3)
 		if val != 0
-			vec[val] = 1
+			vec[val] = 1.0f0
 		end
 		return vec
 	end
@@ -88,17 +88,15 @@ function ensemsol_to_array(x::EnsembleSolution)
 end
 
 # ╔═╡ 999ddd7b-3f3b-4143-a91a-565fdcb78b8c
-function create_model(neurons)
-	invtau = 0.01
+function create_model(rng::AbstractRNG, neurons::Int64)
+	invtau = 100.0f0
     model = Chain(NeuralODE(Parallel(+,
 									 Chain(SkipConnection(Chain(x -> NNlib.softplus.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
 									 Chain(Dense(3,neurons), x -> invtau.*x)); 
-						    dt=0.01, save_everystep=false, save_start=false), 
+						    dt=0.01f0, save_everystep=false, save_start=false, adaptive=false), 
 				  ensemsol_to_array, 
 				  Dense(neurons,1))
-
-    rng = Random.default_rng()
-    Random.seed!(rng, 0)
+	
     ps, st = Lux.setup(rng, model)
 	ps = ComponentArray(ps)
 	
@@ -111,14 +109,14 @@ struct FunctionArray{F} <: AbstractArray{F, 1}
 end
 
 # ╔═╡ d77e83f2-93ae-4427-9bb7-295d89e6ee6d
-function constructSetbatch(batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64}})
+function constructSetbatch(rng::AbstractRNG, batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64}})
 	funcs = []
-	y_expected = zeros(batch)
+	y_expected = Lux.zeros32(rng, batch)
 	for i in 1:batch
-		y = rand([1,2])
-		SET_num = rand(data[y])
-		push!(funcs, make_signal(SET_num, (0.1,0.86), 0.1, 0.04))
-		y_expected[i] = 2.0*y - 3.0
+		y = rand(rng, [1,2])
+		SET_num = rand(rng, data[y])
+		push!(funcs, make_signal(rng, SET_num, (0.1,0.86), 0.1, 0.04))
+		y_expected[i] = 2.0f0*y - 3.0f0
 	end
 	func_array = FunctionArray(funcs)
 	return func_array, y_expected
@@ -184,26 +182,14 @@ function loss(x, y, model, ps, st)
 end
 
 # ╔═╡ 9e7233a5-3993-40f2-b2f5-da08f1c30653
-function test_mse(model, ps, st, batch, data, IC)
+function test_mse(rng, model, ps, st, batch, data, IC)
     st = Lux.testmode(st)
-	func_array, y_expected = constructSetbatch(batch, data)
+	func_array, y_expected = constructSetbatch(rng, batch, data)
 	x = ArrayAndFunctionArray(IC, func_array)
 
 	mse, st = loss(x, y_expected, model, ps, st)
 	return mse
 end
-
-# ╔═╡ a7113390-2c98-4dc6-8ac7-5971e8b02e3d
-function trial_model()
-	model, ps, st = create_model(5)
-	IC = ones(5)
-	data = loadSETdata()
-	mse = test_mse(model, ps, st, 4, data, IC)
-	return mse
-end
-
-# ╔═╡ 39731a08-5628-43c8-aa69-6b6be730e5dd
-trial_model()
 
 # ╔═╡ 367d9dc8-94f7-43a2-b615-859ffa524499
 md"Aye yo! The system works. What can we say except praise Julia."
@@ -214,20 +200,22 @@ md"## Define training regime"
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
 	batch = 64
-	neurons = 100
-    nepochs = 100
+	neurons = 250
+    nepochs = 5
+    rng = Random.default_rng()
+    Random.seed!(rng, 0)
 	
-    model, ps, st = create_model(neurons)
+    model, ps, st = create_model(rng, neurons)
 
     # Training
 	data = loadSETdata()
-	IC = ones(neurons)
+	IC = Lux.zeros32(rng, neurons)
 	
-    opt = Optimisers.ADAM(0.1f0)
+    opt = Optimisers.ADAM(0.01f0)
     st_opt = Optimisers.setup(opt, ps)
 
     ### Warmup the Model
-	func_array, y_expected = constructSetbatch(batch, data)
+	func_array, y_expected = constructSetbatch(rng, batch, data)
 	x = ArrayAndFunctionArray(IC, func_array)
     loss(x, y_expected, model, ps, st)
     (l, _), back = pullback(p -> loss(x, y_expected, model, p, st), ps)
@@ -236,7 +224,7 @@ function train()
     ### Lets train the model
     for epoch in 1:nepochs
         stime = time()
-		func_array, y_expected = constructSetbatch(batch, data)
+		func_array, y_expected = constructSetbatch(rng, batch, data)
 		x = ArrayAndFunctionArray(IC, func_array)
 		(l, st), back = pullback(p -> loss(x, y_expected, model, p, st), ps)
 		### We need to add `nothing`s equal to the number of returned values - 1
@@ -244,38 +232,12 @@ function train()
 		st_opt, ps = Optimisers.update(st_opt, ps, gs)
         ttime = time() - stime
 
-        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, batch, data, IC); digits=2)) \t ")
+        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(rng, model, ps, st, batch, data, IC); digits=2)) \t ")
     end
 end
 
 # ╔═╡ c3bdb210-65c8-4124-ba98-bf41e4f8101b
 train()
-
-# ╔═╡ 09242d0f-290f-449e-8c6c-7553f02c3e84
-md"## Experiment with parameter initialization"
-
-# ╔═╡ 6f028332-4c8c-4daa-8c4b-330a7694df99
-function create_model_experiment_ps(neurons)
-	invtau = 0.01
-    model = Chain(NeuralODE(Parallel(+,
-									 Chain(SkipConnection(Chain(x -> NNlib.softplus.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
-									 Chain(Dense(3,neurons), x -> invtau.*x)); 
-						    dt=0.01, save_everystep=false, save_start=false), 
-				  ensemsol_to_array, 
-				  Dense(neurons,1))
-
-    rng = Random.default_rng()
-    Random.seed!(rng, 0)
-    ps, st = Lux.setup(rng, model)
-	
-    return ps
-end
-
-# ╔═╡ 104c2333-67e2-4bac-a268-c934cd6ff132
-ps = create_model_experiment_ps(100)
-
-# ╔═╡ 20219ddb-eba9-47b2-a6ab-87e4acef31bf
-ps.layer_1.layer_1.layer_1.layer_2.weight
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1768,15 +1730,9 @@ version = "17.4.0+0"
 # ╠═ec541eb5-3a17-4abe-a137-8c0137313ac2
 # ╠═dba32c15-46e5-4f78-8e29-55e9d298feff
 # ╠═9e7233a5-3993-40f2-b2f5-da08f1c30653
-# ╠═a7113390-2c98-4dc6-8ac7-5971e8b02e3d
-# ╠═39731a08-5628-43c8-aa69-6b6be730e5dd
 # ╟─367d9dc8-94f7-43a2-b615-859ffa524499
 # ╟─6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
 # ╠═a16b8ad5-02cf-4a81-a48e-fb0321440843
 # ╠═c3bdb210-65c8-4124-ba98-bf41e4f8101b
-# ╟─09242d0f-290f-449e-8c6c-7553f02c3e84
-# ╠═6f028332-4c8c-4daa-8c4b-330a7694df99
-# ╠═104c2333-67e2-4bac-a268-c934cd6ff132
-# ╠═20219ddb-eba9-47b2-a6ab-87e4acef31bf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
