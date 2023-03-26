@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ dea87669-3e2b-47ce-bbc0-95399f5c71fb
- using Lux, ComponentArrays, LinearAlgebra, SciMLSensitivity, NNlib, Optimisers, OrdinaryDiffEq, Random, Statistics, Zygote, OneHotArrays, CSV, DataFrames
+ using Lux, ComponentArrays, LinearAlgebra, SciMLSensitivity, NNlib, Optimisers, OrdinaryDiffEq, Random, Statistics, Zygote, CSV, DataFrames
 
 # ╔═╡ d188be7a-e414-4fc5-ba6f-d89bacaf69f3
 function loadSETdata()
@@ -18,7 +18,7 @@ function loadSETdata()
 end
 
 # ╔═╡ 5e3bac12-77cb-455d-8bf9-f441bacd2a87
-function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float64, Float64}, min_pulse_gap::Float64, pulse_width::Float64)
+function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float32, Float32}, min_pulse_gap::Float32, pulse_width::Float32)
 	
     SET_string = reverse(digits(SET))
 	SET_length = length(SET_string)
@@ -26,10 +26,10 @@ function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float64, Float64},
 	signal_values = [zero_string SET_string]'[:]
 	append!(signal_values, zeros(Int64, 1))
 	
-	signal_begin = sort(rand(rng, SET_length).*(lag[2]-lag[1]).+lag[1])
+	signal_begin = sort(rand(rng, Float32, SET_length).*(lag[2]-lag[1]).+lag[1])
 	signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
 	while minimum(signal_gaps) < min_pulse_gap
-		signal_begin = sort(rand(rng, SET_length).*(lag[2]-lag[1]).+lag[1])
+		signal_begin = sort(rand(rng, Float32, SET_length).*(lag[2]-lag[1]).+lag[1])
 		signal_gaps = [signal_begin[i]-signal_begin[i-1] for i in 2:length(signal_begin)]
 	end
 	
@@ -91,7 +91,7 @@ end
 function create_model(rng::AbstractRNG, neurons::Int64)
 	invtau = 100.0f0
     model = Chain(NeuralODE(Parallel(+,
-									 Chain(SkipConnection(Chain(x -> NNlib.softplus.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
+									 Chain(SkipConnection(Chain(x -> NNlib.tanh_fast.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
 									 Chain(Dense(3,neurons), x -> invtau.*x)); 
 						    dt=0.01f0, save_everystep=false, save_start=false, adaptive=false), 
 				  ensemsol_to_array, 
@@ -115,7 +115,7 @@ function constructSetbatch(rng::AbstractRNG, batch::Int64, data::Tuple{Vector{In
 	for i in 1:batch
 		y = rand(rng, [1,2])
 		SET_num = rand(rng, data[y])
-		push!(funcs, make_signal(rng, SET_num, (0.1,0.86), 0.1, 0.04))
+		push!(funcs, make_signal(rng, SET_num, (0.1f0,0.86f0), 0.1f0, 0.04f0))
 		y_expected[i] = 2.0f0*y - 3.0f0
 	end
 	func_array = FunctionArray(funcs)
@@ -191,19 +191,16 @@ function test_mse(rng, model, ps, st, batch, data, IC)
 	return mse
 end
 
-# ╔═╡ 367d9dc8-94f7-43a2-b615-859ffa524499
-md"Aye yo! The system works. What can we say except praise Julia."
-
 # ╔═╡ 6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
 md"## Define training regime"
 
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
-	batch = 64
-	neurons = 250
-    nepochs = 5
+	batch = 32
+	neurons = 100
+    nepochs = 250
     rng = Random.default_rng()
-    Random.seed!(rng, 0)
+    Random.seed!(rng, 1)
 	
     model, ps, st = create_model(rng, neurons)
 
@@ -211,7 +208,7 @@ function train()
 	data = loadSETdata()
 	IC = Lux.zeros32(rng, neurons)
 	
-    opt = Optimisers.ADAM(0.01f0)
+    opt = Optimisers.ADAM(0.05f0)
     st_opt = Optimisers.setup(opt, ps)
 
     ### Warmup the Model
@@ -236,9 +233,6 @@ function train()
     end
 end
 
-# ╔═╡ c3bdb210-65c8-4124-ba98-bf41e4f8101b
-train()
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -248,7 +242,6 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-OneHotArrays = "0b1bfda6-eb8a-41d2-88d8-f5af5cad476f"
 Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -262,7 +255,6 @@ ComponentArrays = "~0.13.8"
 DataFrames = "~1.5.0"
 Lux = "~0.4.44"
 NNlib = "~0.8.19"
-OneHotArrays = "~0.2.3"
 Optimisers = "~0.2.15"
 OrdinaryDiffEq = "~6.49.3"
 SciMLSensitivity = "~7.26.0"
@@ -275,7 +267,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "d86a76d2e21badb5c9e8033fc70d8c4a48bb11f8"
+project_hash = "4b7e459be0d02c8e83280e43168dba84c646160e"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1730,9 +1722,7 @@ version = "17.4.0+0"
 # ╠═ec541eb5-3a17-4abe-a137-8c0137313ac2
 # ╠═dba32c15-46e5-4f78-8e29-55e9d298feff
 # ╠═9e7233a5-3993-40f2-b2f5-da08f1c30653
-# ╟─367d9dc8-94f7-43a2-b615-859ffa524499
 # ╟─6c4ad6a4-02b2-4b8f-8221-7375e12c3cd8
 # ╠═a16b8ad5-02cf-4a81-a48e-fb0321440843
-# ╠═c3bdb210-65c8-4124-ba98-bf41e4f8101b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
