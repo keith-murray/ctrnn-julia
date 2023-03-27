@@ -89,13 +89,17 @@ end
 
 # ╔═╡ 999ddd7b-3f3b-4143-a91a-565fdcb78b8c
 function create_model(rng::AbstractRNG, neurons::Int64)
+	recurrent_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=0.5)
+	input_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=1.0)
+	output_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=0.0)
+	
 	invtau = 100.0f0
     model = Chain(NeuralODE(Parallel(+,
-									 Chain(SkipConnection(Chain(x -> NNlib.tanh_fast.(x),Dense(neurons,neurons, use_bias=false)),-),x -> invtau.*x),
-									 Chain(Dense(3,neurons), x -> invtau.*x)); 
+									 Chain(SkipConnection(Chain(x -> NNlib.tanh_fast.(x), Dense(neurons,neurons; init_weight=recurrent_init, use_bias=false)),-), x -> invtau.*x),
+									 Chain(Dense(3,neurons; init_weight=input_init), x -> invtau.*x)); 
 						    dt=0.01f0, save_everystep=false, save_start=false, adaptive=false), 
 				  ensemsol_to_array, 
-				  Dense(neurons,1))
+				  Dense(neurons,1; init_weight=output_init))
 	
     ps, st = Lux.setup(rng, model)
 	ps = ComponentArray(ps)
@@ -116,7 +120,7 @@ function constructSetbatch(rng::AbstractRNG, batch::Int64, data::Tuple{Vector{In
 		y = rand(rng, [1,2])
 		SET_num = rand(rng, data[y])
 		push!(funcs, make_signal(rng, SET_num, (0.1f0,0.86f0), 0.1f0, 0.04f0))
-		y_expected[i] = 2.0f0*y - 3.0f0
+		y_expected[i] = 10.0f0*y - 15.0f0
 	end
 	func_array = FunctionArray(funcs)
 	return func_array, y_expected
@@ -196,7 +200,7 @@ md"## Define training regime"
 
 # ╔═╡ a16b8ad5-02cf-4a81-a48e-fb0321440843
 function train()
-	batch = 32
+	batch = 64
 	neurons = 100
     nepochs = 250
     rng = Random.default_rng()
@@ -208,7 +212,7 @@ function train()
 	data = loadSETdata()
 	IC = Lux.zeros32(rng, neurons)
 	
-    opt = Optimisers.ADAM(0.05f0)
+    opt = Optimisers.ADAM(0.001f0)
     st_opt = Optimisers.setup(opt, ps)
 
     ### Warmup the Model
