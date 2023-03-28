@@ -8,7 +8,7 @@ using InteractiveUtils
 using Lux, ComponentArrays, LinearAlgebra, SciMLSensitivity, NNlib, Optimisers, OrdinaryDiffEq, Random, Statistics, Zygote, CSV, DataFrames
 
 # ╔═╡ 3e012b43-b81a-4241-9d53-33af5a0c31e1
-using AlgebraOfGraphics
+using AlgebraOfGraphics, CairoMakie
 
 # ╔═╡ 3a2307c5-f38c-4068-a33e-5d27a8d7fd5d
 function loadSETdata()
@@ -104,18 +104,21 @@ end
 
 # ╔═╡ 6c8ce6b0-5dd4-429c-99bf-3d153a7d1f91
 function create_model(rng::AbstractRNG, neurons::Int64)
-	recurrent_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=0.5)
+	recurrent_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=0.8)
 	input_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=1.0)
 	output_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=1.0)
 	
-	invtau = 20.0f0
-    model = Chain(Scale(neurons,neurons; use_bias=false),
-				  NeuralODE(Parallel(+,
-									 Chain(SkipConnection(Chain(x -> NNlib.tanh_fast.(x), Dense(neurons,neurons; init_weight=recurrent_init, use_bias=false)),-), x -> invtau.*x),
-									 Chain(Dense(4,neurons; init_weight=input_init), x -> invtau.*x)); 
+	act_func = x -> NNlib.tanh_fast.(x)
+	invtau_func = x -> 10.0f0.*x
+	
+    model = Chain(Scale(neurons; use_bias=false),
+				  NeuralODE(Chain(Parallel(+,
+									SkipConnection(Chain(act_func, Dense(neurons,neurons; init_weight=recurrent_init, use_bias=false)),-),
+									Dense(4,neurons; init_weight=input_init)),
+					  			  invtau_func),
 						    dt=0.01f0, save_start=false, adaptive=false), 
 				  ensemsol_to_array, 
-				  x -> NNlib.tanh_fast.(x),
+				  act_func,
 				  BranchLayer(Dense(neurons,2; init_weight=output_init),
 				  			  NoOpLayer()))
 	
@@ -204,15 +207,22 @@ md"## Define utility functions"
 meansquarederror(y_pred, y) =  mean(abs2, y_pred .- y)
 
 # ╔═╡ 0d5ec616-c51e-4bfb-8e48-fe7feac02808
-L2_reg(ps) = sum(abs2, ps.layer_1.layer_2.layer_1.weight) + sum(abs2, ps.layer_4.layer_1.weight)
+L2_reg(ps) = sum(abs2, ps.layer_2.layer_1.layer_2.weight) + sum(abs2, ps.layer_2.layer_1.layer_1.layer_2.weight) + sum(abs2, ps.layer_5.layer_1.weight)
 
 # ╔═╡ 686f78d4-79ca-463b-9711-3ee4968e2419
-AR_reg(y) = mean(abs2, y)*0.01f0
+AR_reg(y) = mean(abs2, y)
 
 # ╔═╡ 75b634a2-cd0f-4ed9-b874-b1d71e4385f9
 function loss(x, y, model, ps, st)
     y_pred, st = model(x, ps, st)
-	l = meansquarederror(y_pred[1], y) + L2_reg(ps) + AR_reg(y_pred[2])
+	l = meansquarederror(y_pred[1], y) + 0.25f0*L2_reg(ps) + 0.25f0*AR_reg(y_pred[2])
+    return l, st
+end
+
+# ╔═╡ 7be03ac6-ca45-48c5-b9c1-0779c01918d8
+function loss_no_reg(x, y, model, ps, st)
+    y_pred, st = model(x, ps, st)
+	l = meansquarederror(y_pred[1], y)
     return l, st
 end
 
@@ -270,16 +280,96 @@ function train(batch, neurons, nepochs, lr, seed)
 end
 
 # ╔═╡ 645060b5-a105-4b1b-a8c2-61e5de5a8578
-ps = train(128, 100, 25, 0.001f0, 0)
+ps = train(128, 100, 25, 0.0001f0, 0)
+
+# ╔═╡ 18da5a33-22a8-4c33-a373-99a359361f4d
+md"## Test with constant data"
+
+# ╔═╡ 3e1a424d-fc77-4cb7-ade7-ac08c964cfde
+function test_mse_const_data(model, ps, st, x, y_expected)
+    st = Lux.testmode(st)
+	y_pred, st = model(x, ps, st)
+	return meansquarederrorTEST(y_pred[1], y_expected)
+end
+
+# ╔═╡ b868fb2e-1fe7-4fc7-adf2-6182fc1b2fb8
+function train_const_data(rng, x, y_expected, neurons, nepochs, lr)
+    model, ps, st = create_model(rng, neurons)
+	
+    opt = Optimisers.ADAM(lr)
+    st_opt = Optimisers.setup(opt, ps)
+
+    ### Warmup the Model
+    loss_no_reg(x, y_expected, model, ps, st)
+    (l, _), back = pullback(p -> loss_no_reg(x, y_expected, model, p, st), ps)
+    back((one(l), nothing))
+
+    ### Lets train the model
+    for epoch in 1:nepochs
+        stime = time()
+		(l, st), back = pullback(p -> loss_no_reg(x, y_expected, model, p, st), ps)
+		### We need to add `nothing`s equal to the number of returned values - 1
+		gs = back((one(l), nothing))[1]
+		st_opt, ps = Optimisers.update(st_opt, ps, gs)
+        ttime = time() - stime
+
+        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse_const_data(model, ps, st, x, y_expected); digits=2)) \t ")
+    end
+	return ps
+end
+
+# ╔═╡ 324bf22d-f847-4405-9991-4125f49c423c
+begin
+	seed = 1
+	neurons = 100
+	batch = 4
+	
+    rng = Random.default_rng()
+    Random.seed!(rng, seed)
+	
+	SETdata = loadSETdata()
+	IC = Lux.ones32(rng, neurons)
+	func_array, y_expected = constructSetbatch(rng, batch, SETdata)
+	x = ArrayAndFunctionArray(IC, func_array)
+end
+
+# ╔═╡ 866ca577-9bf1-475d-8555-6a2cc1e1e7c5
+y_expected
+
+# ╔═╡ b1ff6143-87c5-41db-b4f2-d84ea6003ee9
+ps_const_data = train_const_data(rng, x, y_expected, neurons, 15000, 0.00001f0)
 
 # ╔═╡ 727e4e0b-96a7-4a6c-b983-9bba18365789
 md"## Visualizations"
+
+# ╔═╡ 3056bab8-209a-4b94-a400-85b249bbff21
+md"### Setup"
+
+# ╔═╡ b86a3a8a-30bc-47e6-9e35-77bb704c2f6b
+begin
+    model, ps_do_not_use, st = create_model(rng, neurons)
+	time_range = 0.00f0:0.01f0:0.50f0
+end
+
+# ╔═╡ bc1c9ac9-5a9c-4a62-9f57-c0557deedae4
+(y_out, r_out), st_out = model(x, ps_const_data, st)
+
+# ╔═╡ a5ea3892-8df9-4e55-8d0f-cbb141bb9295
+md"### Visualize inputs"
+
+# ╔═╡ cd51b39c-827c-44e2-982a-bcadad36fe4f
+begin
+df = (x=rand(100), y=rand(100), j=rand(["d", "e", "f"], 100))
+plt = data(df) * mapping(:x, :y, row=:j)
+draw(plt)
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -295,6 +385,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 [compat]
 AlgebraOfGraphics = "~0.6.14"
 CSV = "~0.10.9"
+CairoMakie = "~0.10.3"
 ComponentArrays = "~0.13.8"
 DataFrames = "~1.5.0"
 Lux = "~0.4.45"
@@ -311,7 +402,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "0e6c6f75df6fa569967ec17ea1433a7915fcecaf"
+project_hash = "6b34172ef95d91f54d7bfc5d84f2288a7f6774f7"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -489,6 +580,18 @@ deps = ["Artifacts", "CUDA_Runtime_jll", "JLLWrappers", "LazyArtifacts", "Libdl"
 git-tree-sha1 = "2918fbffb50e3b7a0b9127617587afa76d4276e8"
 uuid = "62b44479-cb7b-5706-934f-f13b2eb2e645"
 version = "8.8.1+0"
+
+[[deps.Cairo]]
+deps = ["Cairo_jll", "Colors", "Glib_jll", "Graphics", "Libdl", "Pango_jll"]
+git-tree-sha1 = "d0b3f8b4ad16cb0a2988c6788646a5e6a17b6b1b"
+uuid = "159f3aea-2a34-519c-b102-8c37f9878175"
+version = "1.0.5"
+
+[[deps.CairoMakie]]
+deps = ["Base64", "Cairo", "Colors", "FFTW", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "SHA", "SnoopPrecompile"]
+git-tree-sha1 = "7a6a830076a6eb2a8289e751e7237c04a1ce0ddd"
+uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+version = "0.10.3"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -1699,6 +1802,12 @@ git-tree-sha1 = "03a7a85b76381a3d04c7a1656039197e70eda03d"
 uuid = "5432bcbf-9aad-5242-b902-cca2824c8663"
 version = "0.5.11"
 
+[[deps.Pango_jll]]
+deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "84a314e3926ba9ec66ac097e3635e270986b0f10"
+uuid = "36c8627f-9965-5494-a995-c6b170f724f3"
+version = "1.50.9+0"
+
 [[deps.Parameters]]
 deps = ["OrderedCollections", "UnPack"]
 git-tree-sha1 = "34c0e9ad262e5f7fc75b10a9952ca7692cfc5fbe"
@@ -2540,12 +2649,24 @@ version = "3.5.0+0"
 # ╠═0d5ec616-c51e-4bfb-8e48-fe7feac02808
 # ╠═686f78d4-79ca-463b-9711-3ee4968e2419
 # ╠═75b634a2-cd0f-4ed9-b874-b1d71e4385f9
+# ╠═7be03ac6-ca45-48c5-b9c1-0779c01918d8
 # ╠═49234d0e-7443-4b86-958f-545e0f3badc5
 # ╠═91d30878-23f2-44f6-b0fe-ef3dfc56f25f
 # ╟─35323fa6-20bb-4c0d-a869-30150012f3a0
 # ╠═35c23a77-34f5-4d39-b32a-dc6a36dfd7f9
 # ╠═645060b5-a105-4b1b-a8c2-61e5de5a8578
+# ╟─18da5a33-22a8-4c33-a373-99a359361f4d
+# ╠═3e1a424d-fc77-4cb7-ade7-ac08c964cfde
+# ╠═b868fb2e-1fe7-4fc7-adf2-6182fc1b2fb8
+# ╠═324bf22d-f847-4405-9991-4125f49c423c
+# ╠═866ca577-9bf1-475d-8555-6a2cc1e1e7c5
+# ╠═b1ff6143-87c5-41db-b4f2-d84ea6003ee9
 # ╟─727e4e0b-96a7-4a6c-b983-9bba18365789
 # ╠═3e012b43-b81a-4241-9d53-33af5a0c31e1
+# ╟─3056bab8-209a-4b94-a400-85b249bbff21
+# ╠═b86a3a8a-30bc-47e6-9e35-77bb704c2f6b
+# ╠═bc1c9ac9-5a9c-4a62-9f57-c0557deedae4
+# ╟─a5ea3892-8df9-4e55-8d0f-cbb141bb9295
+# ╠═cd51b39c-827c-44e2-982a-bcadad36fe4f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
