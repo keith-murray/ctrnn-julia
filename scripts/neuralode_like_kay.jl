@@ -7,6 +7,9 @@ using InteractiveUtils
 # ╔═╡ b2f00758-9ffc-487b-a4b5-c24f9ea86890
 using Lux, ComponentArrays, LinearAlgebra, SciMLSensitivity, NNlib, Optimisers, OrdinaryDiffEq, Random, Statistics, Zygote, CSV, DataFrames
 
+# ╔═╡ 1f7b5b9d-774e-4089-9d46-6b1fe9330f50
+using Serialization
+
 # ╔═╡ 3a2307c5-f38c-4068-a33e-5d27a8d7fd5d
 function loadSETdata()
 	df = CSV.read("../data/SETs.csv", DataFrame, missingstring="?", delim=",", header=true)
@@ -319,7 +322,7 @@ end
 begin
 	seed = 1
 	neurons = 100
-	batch = 16
+	batch = 64
 	
     rng = Random.default_rng()
     Random.seed!(rng, seed)
@@ -330,11 +333,19 @@ begin
 	x = ArrayAndFunctionArray(IC, func_array)
 end
 
-# ╔═╡ 866ca577-9bf1-475d-8555-6a2cc1e1e7c5
-y_expected
-
 # ╔═╡ b1ff6143-87c5-41db-b4f2-d84ea6003ee9
-ps_const_data = train_const_data(rng, x, y_expected, neurons, 15000, 0.00001f0)
+ps_const_data = train_const_data(rng, x, y_expected, neurons, 500000, 0.0000075f0)
+
+# ╔═╡ 739a8c7b-4599-4980-b6ab-f770696d4599
+md"## Save PS"
+
+# ╔═╡ ad1b93cf-6e13-426a-957e-389762d17927
+filename = "../data/large_64_ps.jls"
+
+# ╔═╡ b04fe493-01df-480b-a7c1-e5c3394316c2
+open(filename, "w") do f
+	serialize(f, ps_const_data)
+end
 
 # ╔═╡ c115b80a-64a4-43f5-9e9e-7261ac5c8f97
 md"## Lessons learned"
@@ -361,8 +372,20 @@ Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SciMLSensitivity = "1ed8b502-d754-442c-8d5d-10ac956f44a1"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
+[compat]
+CSV = "~0.10.9"
+ComponentArrays = "~0.13.8"
+DataFrames = "~1.5.0"
+Lux = "~0.4.45"
+NNlib = "~0.8.19"
+Optimisers = "~0.2.17"
+OrdinaryDiffEq = "~6.49.4"
+SciMLSensitivity = "~7.27.0"
+Zygote = "~0.6.59"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -371,7 +394,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "ce94deaefd3b00b0cc014a9ec50ea25c230dcfcc"
+project_hash = "3486e8c4c8ee2bbe58021735871cc51c123b3129"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1838,8 +1861,11 @@ version = "17.4.0+0"
 # ╠═3e1a424d-fc77-4cb7-ade7-ac08c964cfde
 # ╠═b868fb2e-1fe7-4fc7-adf2-6182fc1b2fb8
 # ╠═324bf22d-f847-4405-9991-4125f49c423c
-# ╠═866ca577-9bf1-475d-8555-6a2cc1e1e7c5
 # ╠═b1ff6143-87c5-41db-b4f2-d84ea6003ee9
+# ╟─739a8c7b-4599-4980-b6ab-f770696d4599
+# ╠═1f7b5b9d-774e-4089-9d46-6b1fe9330f50
+# ╠═ad1b93cf-6e13-426a-957e-389762d17927
+# ╠═b04fe493-01df-480b-a7c1-e5c3394316c2
 # ╟─c115b80a-64a4-43f5-9e9e-7261ac5c8f97
 # ╟─2c4725ac-7e9f-403e-b7ea-01a3fe6d8428
 # ╟─00000000-0000-0000-0000-000000000001
