@@ -7,6 +7,9 @@ using InteractiveUtils
 # ╔═╡ 4dfdf9aa-a57a-4721-b692-2c6f37f8a456
 using Lux, ComponentArrays, LinearAlgebra, SciMLSensitivity, NNlib, Optimisers, OrdinaryDiffEq, Random, Statistics, Zygote, CSV, DataFrames,  AlgebraOfGraphics, CairoMakie
 
+# ╔═╡ a86d5a85-bbeb-41c2-b36c-5d2d2fdbe148
+using MultivariateStats
+
 # ╔═╡ 530f3619-065d-4e3f-be5b-bb57df65aad7
 function loadSETdata()
 	df = CSV.read("../data/SETs.csv", DataFrame, missingstring="?", delim=",", header=true)
@@ -39,7 +42,7 @@ function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float32, Float32},
 		val = signal_values[searchsortedfirst(signal_locs, t)]
 		vec = Lux.zeros32(rng, 4)
 		if val != 0
-			vec[val] = 3.0f0
+			vec[val] = 1.0f0
 		end
 		if t <= loc_end
 			vec[4] = 1.0f0
@@ -106,7 +109,7 @@ function create_model(rng::AbstractRNG, neurons::Int64)
 	output_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=1.0)
 	
 	act_func = x -> NNlib.tanh_fast.(x)
-	invtau_func = x -> 10.0f0.*x
+	invtau_func = x -> 75.0f0.*x
 	
     model = Chain(Scale(neurons; use_bias=false),
 				  NeuralODE(Chain(Parallel(+,
@@ -137,7 +140,7 @@ function constructSetbatch(rng::AbstractRNG, batch::Int64, data::Tuple{Vector{In
 	for i in 1:batch
 		y = rand(rng, [1,2])
 		SET_num = rand(rng, data[y])
-		push!(funcs, make_signal(rng, SET_num, (0.05f0,0.40f0), 0.05f0, 0.05f0))
+		push!(funcs, make_signal(rng, SET_num, (0.05f0,0.40f0), 0.05f0, 0.02f0))
 		y_expected[i] = 2.0f0*y - 3.0f0
 	end
 	func_array = FunctionArray(funcs)
@@ -198,9 +201,22 @@ md"## Define utility functions"
 meansquarederror(y_pred, y) =  mean(abs2, y_pred .- y)
 
 # ╔═╡ e78f4082-ddcb-403a-b190-04f03f2ac1bc
-function loss(x, y, model, ps, st)
+function loss_old(x, y, model, ps, st)
     y_pred, st = model(x, ps, st)
 	l = meansquarederror(y_pred[1], y)
+    return l, st
+end
+
+# ╔═╡ b2df290b-69f9-422e-980a-d3bce9ac4948
+L2_reg(ps) = sum(abs2, ps.layer_2.layer_1.layer_2.weight) + sum(abs2, ps.layer_2.layer_1.layer_1.layer_2.weight) + sum(abs2, ps.layer_5.layer_1.weight)
+
+# ╔═╡ 16526e1a-e8d0-4855-ad4b-ced05e6491da
+AR_reg(y) = mean(abs2, y)
+
+# ╔═╡ 382b370f-fbfa-4c2e-a55b-2fb03fb0468e
+function loss(x, y, model, ps, st)
+    y_pred, st = model(x, ps, st)
+	l = meansquarederror(y_pred[1], y) + 0.001f0*L2_reg(ps) + 0.001f0*AR_reg(y_pred[2])
     return l, st
 end
 
@@ -250,7 +266,7 @@ md"## Train model"
 begin
 	seed = 1
 	neurons = 100
-	batch = 2
+	batch = 8
 	
     rng = Random.default_rng()
     Random.seed!(rng, seed)
@@ -265,7 +281,7 @@ end
 y_expected
 
 # ╔═╡ 8c6028fa-5dea-44c4-8c56-b09461d4ccf3
-ps = train(rng, x, y_expected, neurons, 5000, 0.00001f0)
+ps = train(rng, x, y_expected, neurons, 2500, 0.0001f0)
 
 # ╔═╡ f89ddc5e-c713-4bec-9a64-04fd4fa1cf6f
 md"## Visualize results"
@@ -282,12 +298,33 @@ end
 # ╔═╡ bc6d9c75-27ce-4f0f-83e1-3f5eda632afb
 (y_out, r_out), st_out = model(x, ps, st)
 
+# ╔═╡ a70c08db-369a-4b7c-819d-eeedb74a6c20
+md"### Visualize inputs"
+
+# ╔═╡ fe32b64a-3aee-428e-853f-ac559c71c5ed
+begin
+	inputs = reduce(hcat, func_array[2].(time_range))
+	df_in = DataFrame(
+	    time = vcat(time_range, time_range, time_range, time_range),
+	    signal = vcat(inputs[1, :], 
+					  inputs[2, :],
+					  inputs[3, :],
+					  inputs[4, :]),
+		type_of_signal = vcat(["attribute 1" for i in 1:50],
+							  ["attribute 2" for i in 1:50],
+							  ["attribute 3" for i in 1:50],
+							  ["fixation" for i in 1:50]),
+	)
+	plt_input = data(df_in) * mapping(:time, :signal; row=:type_of_signal) * visual(Lines)
+	draw(plt_input)
+end
+
 # ╔═╡ 2cb88e2f-3b35-4d76-a2f0-a34d28b488b9
 md"### Visualize outputs"
 
 # ╔═╡ 35d4f8de-d0b8-4bf4-b554-4135d92356d2
 begin
-	df = DataFrame(
+	df_out = DataFrame(
 	    time = vcat(time_range, time_range, time_range, time_range),
 	    signal = vcat(y_expected[1, :, 2], 
 					  y_out[1, :, 2],
@@ -302,8 +339,42 @@ begin
 									["fixation" for i in 1:50],
 									["fixation" for i in 1:50]),
 	)
-	plt = data(df) * mapping(:time, :signal; color=:expected_or_observed, row=:classify_or_fixation) * visual(Lines)
-	draw(plt)
+	plt_output = data(df_out) * mapping(:time, :signal; color=:expected_or_observed, row=:classify_or_fixation) * visual(Lines)
+	draw(plt_output)
+end
+
+# ╔═╡ 422a08ff-c304-4b07-a4ef-3fb3a9b0d56c
+md"### Visualize PCA of recurrent activities"
+
+# ╔═╡ 9e5d50dd-b619-4cba-8814-a8007524f13f
+cat_r_out = reduce(hcat, r_out[:,1:45,i] for i in 1:batch)
+
+# ╔═╡ 62778e6e-b9c7-4655-b33e-703f908d1085
+M = fit(PCA, cat_r_out; maxoutdim=3)
+
+# ╔═╡ bdaf2bd7-9f45-4ff0-8ce7-c9cf2467a8cc
+rates = predict(M, cat_r_out)
+
+# ╔═╡ 416a71b1-7483-4c24-9793-a65f8f41d6a2
+df_rates = DataFrame(
+	time = vcat(time_range[1:45], time_range[1:45]),
+	pc_1 = rates[1,1:90],
+	pc_2 = rates[2,1:90],
+	pc_3 = rates[3,1:90],
+	type_of_signal = vcat(["reject" for i in 1:45],
+						  ["accept" for i in 1:45]),
+	begin_end = vcat(["begin" for i in 1:20],
+					 ["end" for i in 1:25],
+					 ["begin" for i in 1:20],
+					 ["end" for i in 1:25]),
+)
+
+# ╔═╡ f8b76ced-195e-414d-9334-97e300b0be58
+begin
+	axis = (type = Axis3, width = 300, height = 300)
+	layers = visual(Scatter) + visual(Lines)
+	plt_rates = data(df_rates) * mapping(:pc_1, :pc_2) * layers * mapping(:pc_3, color = :type_of_signal, marker = :begin_end)
+	draw(plt_rates; axis=axis)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -316,6 +387,7 @@ ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
+MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
@@ -331,6 +403,7 @@ CairoMakie = "~0.10.3"
 ComponentArrays = "~0.13.8"
 DataFrames = "~1.5.0"
 Lux = "~0.4.47"
+MultivariateStats = "~0.10.1"
 NNlib = "~0.8.19"
 Optimisers = "~0.2.17"
 OrdinaryDiffEq = "~6.49.4"
@@ -344,7 +417,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "b6a9f03918e71e371e3ca1b56dadcd7d8dc8232f"
+project_hash = "5d33e3448ced1281399db505e3d917175bd2eeb3"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -395,6 +468,18 @@ deps = ["LinearAlgebra", "Random", "StaticArrays"]
 git-tree-sha1 = "62e51b39331de8911e4a7ff6f5aaf38a5f4cc0ae"
 uuid = "ec485272-7323-5ecc-a04f-4719b315124d"
 version = "0.2.0"
+
+[[deps.Arpack]]
+deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
+git-tree-sha1 = "9b9b347613394885fd1c8c7729bfc60528faa436"
+uuid = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
+version = "0.5.4"
+
+[[deps.Arpack_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "OpenBLAS_jll", "Pkg"]
+git-tree-sha1 = "5ba6c757e8feccf03a1554dfaf3e26b3cfc7fd5e"
+uuid = "68821587-b530-5797-8361-c406ea357684"
+version = "3.5.1+1"
 
 [[deps.ArrayInterface]]
 deps = ["Adapt", "LinearAlgebra", "Requires", "SnoopPrecompile", "SparseArrays", "SuiteSparse"]
@@ -1571,6 +1656,12 @@ git-tree-sha1 = "cac9cc5499c25554cba55cd3c30543cff5ca4fab"
 uuid = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 version = "0.2.4"
 
+[[deps.MultivariateStats]]
+deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI", "StatsBase"]
+git-tree-sha1 = "91a48569383df24f0fd2baf789df2aade3d0ad80"
+uuid = "6f286f6a-111f-5878-ab1e-185364afe411"
+version = "0.10.1"
+
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
 git-tree-sha1 = "a0b464d183da839699f4c79e7606d9d186ec172c"
@@ -2575,13 +2666,13 @@ version = "3.5.0+0"
 # ╠═4dfdf9aa-a57a-4721-b692-2c6f37f8a456
 # ╟─b46a7d9b-49e8-4915-921d-01b4c97f0ad7
 # ╟─530f3619-065d-4e3f-be5b-bb57df65aad7
-# ╟─1e2ea060-7226-49ab-845b-a0f94c6b4c10
+# ╠═1e2ea060-7226-49ab-845b-a0f94c6b4c10
 # ╟─72ff1152-a2a1-4416-9c88-b223265d3d38
-# ╟─23ee7fc1-cd37-44a0-bb53-2cd98b770d78
+# ╠═23ee7fc1-cd37-44a0-bb53-2cd98b770d78
 # ╟─b7700d73-7bb4-48e3-92ee-7b5717a7a27c
 # ╟─69164bed-e025-4a78-a23f-c0e77cb559f5
 # ╟─6308855b-e350-457b-93c5-58d31c33d03e
-# ╟─bc693cc5-c02f-4b64-aabe-37f1d37e91bf
+# ╠═bc693cc5-c02f-4b64-aabe-37f1d37e91bf
 # ╟─2f3f3a63-7d7d-4101-8dc1-8c9ca645915d
 # ╟─ba7dd61e-1d60-4b49-b5d5-516f8dd99e62
 # ╟─68d3ecee-0a78-4c61-ad9a-38d09a0e5bd0
@@ -2589,10 +2680,13 @@ version = "3.5.0+0"
 # ╟─a6739bcb-4e62-4008-a010-250db63a0ce0
 # ╠═532ac7f7-e533-4659-b8cd-dc5f4916bb58
 # ╠═e78f4082-ddcb-403a-b190-04f03f2ac1bc
+# ╠═b2df290b-69f9-422e-980a-d3bce9ac4948
+# ╠═16526e1a-e8d0-4855-ad4b-ced05e6491da
+# ╠═382b370f-fbfa-4c2e-a55b-2fb03fb0468e
 # ╟─cdab3ce9-d072-47c6-bb85-3ac8408c708d
 # ╟─63f18971-d434-4a38-b26f-aa5bb82e9b1b
 # ╟─a5ee7984-dff9-490c-b7b1-eaf892a22c88
-# ╟─b07d1aa3-2b23-438c-baf8-ecf892f075ad
+# ╠═b07d1aa3-2b23-438c-baf8-ecf892f075ad
 # ╟─36474e4d-baad-4fda-ae53-35a3f9719cb7
 # ╠═49c9a208-20c9-450b-9a8a-9c1a89863453
 # ╠═6a4be6a6-d11c-49a3-8a8b-e11b831367ce
@@ -2601,7 +2695,16 @@ version = "3.5.0+0"
 # ╟─9d8772a1-3ea1-41fe-8a55-47a880aedfb8
 # ╠═ee2c880f-f20d-4bf1-ad61-f8da08fcbbb5
 # ╠═bc6d9c75-27ce-4f0f-83e1-3f5eda632afb
+# ╟─a70c08db-369a-4b7c-819d-eeedb74a6c20
+# ╟─fe32b64a-3aee-428e-853f-ac559c71c5ed
 # ╟─2cb88e2f-3b35-4d76-a2f0-a34d28b488b9
 # ╟─35d4f8de-d0b8-4bf4-b554-4135d92356d2
+# ╟─422a08ff-c304-4b07-a4ef-3fb3a9b0d56c
+# ╠═a86d5a85-bbeb-41c2-b36c-5d2d2fdbe148
+# ╠═9e5d50dd-b619-4cba-8814-a8007524f13f
+# ╠═62778e6e-b9c7-4655-b33e-703f908d1085
+# ╠═bdaf2bd7-9f45-4ff0-8ce7-c9cf2467a8cc
+# ╠═416a71b1-7483-4c24-9793-a65f8f41d6a2
+# ╠═f8b76ced-195e-414d-9334-97e300b0be58
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
