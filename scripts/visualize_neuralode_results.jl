@@ -19,7 +19,7 @@ function loadSETdata()
 end
 
 # ╔═╡ 1e2ea060-7226-49ab-845b-a0f94c6b4c10
-function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float32, Float32}, min_pulse_gap::Float32, pulse_width::Float32)
+function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float32, Float32}, min_pulse_gap::Float32, pulse_width::Float32, vecs)
 	
     SET_string = reverse(digits(SET))
 	SET_length = length(SET_string)
@@ -40,9 +40,9 @@ function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float32, Float32},
 	
 	function signal(t)
 		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = Lux.zeros32(rng, 3)
+		vec = Lux.zeros32(rng, 100)
 		if val != 0
-			vec[val] = 1.0f0
+			vec = vecs[val,:]
 		end
 		"""
 		if t <= loc_end
@@ -66,6 +66,11 @@ function constructOutput(rng::AbstractRNG, y_expected::Array)
 	return out_desired
 end
 
+# ╔═╡ 5d4fb3a3-cc44-4888-bfd8-6a574d8598ee
+function constructInputVecs(rng::AbstractRNG, neurons::Int64)
+	return Lux.randn32(rng, 3, neurons)
+end
+
 # ╔═╡ 69164bed-e025-4a78-a23f-c0e77cb559f5
 begin
 	struct NeuralODE{M <: Lux.AbstractExplicitLayer, R, So, Se, T, K} <:
@@ -87,7 +92,7 @@ begin
 	function (n::NeuralODE)(x, ps, st)
 		function make_new_func(func)
 		    function dudt(u, p, t)
-		        u_, st = n.model((u, func(t), 0.10f0*Lux.rand32(n.randGen, 100)), p, st)
+		        u_, st = n.model((u, func(t), 0.15f0*Lux.randn32(n.randGen, 100)), p, st)
 		        return u_
 		    end
 			return dudt
@@ -119,7 +124,7 @@ function create_model(rng::AbstractRNG, neurons::Int64)
     model = Chain(Scale(neurons; use_bias=false),
 				  NeuralODE(Chain(Parallel(+,
 									SkipConnection(Chain(act_func, Dense(neurons,neurons; init_weight=recurrent_init, use_bias=false)),-),
-									Dense(3,neurons; init_weight=input_init),
+									Dense(neurons,neurons; init_weight=input_init),
 				  					NoOpLayer()),
 					  			  invtau_func),
 						    rng, dt=0.01f0, save_start=false, adaptive=false), 
@@ -143,10 +148,11 @@ end
 function constructSetbatch(rng::AbstractRNG, batch::Int64, data::Tuple{Vector{Int64}, Vector{Int64}})
 	funcs = []
 	y_expected = Lux.zeros32(rng, batch)
+	vecs = constructInputVecs(rng, 100)
 	for i in 1:batch
 		y = rand(rng, [1,2])
 		SET_num = rand(rng, data[y])
-		push!(funcs, make_signal(rng, SET_num, (0.05f0,0.38f0), 0.10f0, 0.02f0))
+		push!(funcs, make_signal(rng, SET_num, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs))
 		y_expected[i] = 2.0f0*y - 3.0f0
 	end
 	func_array = FunctionArray(funcs)
@@ -222,7 +228,7 @@ AR_reg(y) = mean(abs2, y)
 # ╔═╡ 382b370f-fbfa-4c2e-a55b-2fb03fb0468e
 function loss(x, y, model, ps, st)
     y_pred, st = model(x, ps, st)
-	l = meansquarederror(y_pred[1], y) + 0.00005f0*L2_reg(ps) + 0.00005f0*AR_reg(y_pred[2])
+	l = meansquarederror(y_pred[1], y) + 0.0001f0*L2_reg(ps) + 0.0001f0*AR_reg(y_pred[2])
     return l, st
 end
 
@@ -2666,6 +2672,7 @@ version = "3.5.0+0"
 # ╟─530f3619-065d-4e3f-be5b-bb57df65aad7
 # ╠═1e2ea060-7226-49ab-845b-a0f94c6b4c10
 # ╠═72ff1152-a2a1-4416-9c88-b223265d3d38
+# ╠═5d4fb3a3-cc44-4888-bfd8-6a574d8598ee
 # ╠═23ee7fc1-cd37-44a0-bb53-2cd98b770d78
 # ╟─b7700d73-7bb4-48e3-92ee-7b5717a7a27c
 # ╠═69164bed-e025-4a78-a23f-c0e77cb559f5
