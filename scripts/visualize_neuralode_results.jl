@@ -40,13 +40,15 @@ function make_signal(rng::AbstractRNG, SET::Int64, lag::Tuple{Float32, Float32},
 	
 	function signal(t)
 		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = Lux.zeros32(rng, 4)
+		vec = Lux.zeros32(rng, 3)
 		if val != 0
 			vec[val] = 1.0f0
 		end
+		"""
 		if t <= loc_end
 			vec[4] = 1.0f0
 		end
+		"""
 		return vec
 	end
 	return signal
@@ -54,35 +56,38 @@ end
 
 # ╔═╡ 72ff1152-a2a1-4416-9c88-b223265d3d38
 function constructOutput(rng::AbstractRNG, y_expected::Array)
-	out_desired = Lux.zeros32(rng, 2,50,length(y_expected))
+	out_desired = Lux.zeros32(rng, 1,50,length(y_expected))
 	subarr_out = @view out_desired[1, 46:end, :]
 	subarr_out .= reshape(y_expected, 1, :)
+	"""
 	subarr_fix = @view out_desired[2, 1:45, :]
 	subarr_fix .= 1
+	"""
 	return out_desired
 end
 
 # ╔═╡ 69164bed-e025-4a78-a23f-c0e77cb559f5
 begin
-	struct NeuralODE{M <: Lux.AbstractExplicitLayer, So, Se, T, K} <:
+	struct NeuralODE{M <: Lux.AbstractExplicitLayer, R, So, Se, T, K} <:
 	       Lux.AbstractExplicitContainerLayer{(:model,)}
 	    model::M
+		randGen::R
 	    solver::So
 	    sensealg::Se
 	    tspan::T
 	    kwargs::K
 	end
 	
-	function NeuralODE(model::Lux.AbstractExplicitLayer; solver=Euler(),
+	function NeuralODE(model::Lux.AbstractExplicitLayer, randGen; solver=Euler(),
 	                   sensealg=ReverseDiffAdjoint(),
 	                   tspan=(0.00f0, 0.50f0), kwargs...)
-	    return NeuralODE(model, solver, sensealg, tspan, kwargs)
+	    return NeuralODE(model, randGen, solver, sensealg, tspan, kwargs)
 	end
 	
 	function (n::NeuralODE)(x, ps, st)
 		function make_new_func(func)
 		    function dudt(u, p, t)
-		        u_, st = n.model((u, func(t)), p, st)
+		        u_, st = n.model((u, func(t), 0.10f0*Lux.rand32(n.randGen, 100)), p, st)
 		        return u_
 		    end
 			return dudt
@@ -109,17 +114,18 @@ function create_model(rng::AbstractRNG, neurons::Int64)
 	output_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=1.0)
 	
 	act_func = x -> NNlib.tanh_fast.(x)
-	invtau_func = x -> 75.0f0.*x
+	invtau_func = x -> 50.0f0.*x
 	
     model = Chain(Scale(neurons; use_bias=false),
 				  NeuralODE(Chain(Parallel(+,
 									SkipConnection(Chain(act_func, Dense(neurons,neurons; init_weight=recurrent_init, use_bias=false)),-),
-									Dense(4,neurons; init_weight=input_init)),
+									Dense(3,neurons; init_weight=input_init),
+				  					NoOpLayer()),
 					  			  invtau_func),
-						    dt=0.01f0, save_start=false, adaptive=false), 
+						    rng, dt=0.01f0, save_start=false, adaptive=false), 
 				  ensemsol_to_array, 
 				  act_func,
-				  BranchLayer(Dense(neurons,2; init_weight=output_init),
+				  BranchLayer(Dense(neurons,1; init_weight=output_init),
 				  			  NoOpLayer()))
 	
     ps, st = Lux.setup(rng, model)
@@ -140,7 +146,7 @@ function constructSetbatch(rng::AbstractRNG, batch::Int64, data::Tuple{Vector{In
 	for i in 1:batch
 		y = rand(rng, [1,2])
 		SET_num = rand(rng, data[y])
-		push!(funcs, make_signal(rng, SET_num, (0.05f0,0.40f0), 0.05f0, 0.02f0))
+		push!(funcs, make_signal(rng, SET_num, (0.05f0,0.38f0), 0.10f0, 0.02f0))
 		y_expected[i] = 2.0f0*y - 3.0f0
 	end
 	func_array = FunctionArray(funcs)
@@ -216,7 +222,7 @@ AR_reg(y) = mean(abs2, y)
 # ╔═╡ 382b370f-fbfa-4c2e-a55b-2fb03fb0468e
 function loss(x, y, model, ps, st)
     y_pred, st = model(x, ps, st)
-	l = meansquarederror(y_pred[1], y) + 0.001f0*L2_reg(ps) + 0.001f0*AR_reg(y_pred[2])
+	l = meansquarederror(y_pred[1], y) + 0.00005f0*L2_reg(ps) + 0.00005f0*AR_reg(y_pred[2])
     return l, st
 end
 
@@ -254,7 +260,7 @@ function train(rng, x, y_expected, neurons, nepochs, lr)
 		st_opt, ps = Optimisers.update(st_opt, ps, gs)
         ttime = time() - stime
 
-        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, x, y_expected); digits=2)) \t ")
+        println("[$epoch/$nepochs] \t Time $(round(ttime; digits=2))s \t Testing MSE: " * "$(round(test_mse(model, ps, st, x, y_expected); digits=5)) \t ")
     end
 	return ps
 end
@@ -264,7 +270,7 @@ md"## Train model"
 
 # ╔═╡ 49c9a208-20c9-450b-9a8a-9c1a89863453
 begin
-	seed = 1
+	seed = 0
 	neurons = 100
 	batch = 8
 	
@@ -281,7 +287,7 @@ end
 y_expected
 
 # ╔═╡ 8c6028fa-5dea-44c4-8c56-b09461d4ccf3
-ps = train(rng, x, y_expected, neurons, 2500, 0.0001f0)
+ps = train(rng, x, y_expected, neurons, 3500, 0.0001f0)
 
 # ╔═╡ f89ddc5e-c713-4bec-9a64-04fd4fa1cf6f
 md"## Visualize results"
@@ -305,15 +311,13 @@ md"### Visualize inputs"
 begin
 	inputs = reduce(hcat, func_array[2].(time_range))
 	df_in = DataFrame(
-	    time = vcat(time_range, time_range, time_range, time_range),
+	    time = vcat(time_range, time_range, time_range),
 	    signal = vcat(inputs[1, :], 
 					  inputs[2, :],
-					  inputs[3, :],
-					  inputs[4, :]),
+					  inputs[3, :]),
 		type_of_signal = vcat(["attribute 1" for i in 1:50],
 							  ["attribute 2" for i in 1:50],
-							  ["attribute 3" for i in 1:50],
-							  ["fixation" for i in 1:50]),
+							  ["attribute 3" for i in 1:50]),
 	)
 	plt_input = data(df_in) * mapping(:time, :signal; row=:type_of_signal) * visual(Lines)
 	draw(plt_input)
@@ -325,21 +329,15 @@ md"### Visualize outputs"
 # ╔═╡ 35d4f8de-d0b8-4bf4-b554-4135d92356d2
 begin
 	df_out = DataFrame(
-	    time = vcat(time_range, time_range, time_range, time_range),
+	    time = vcat(time_range, time_range),
 	    signal = vcat(y_expected[1, :, 2], 
-					  y_out[1, :, 2],
-					  y_expected[2, :, 2],
-					  y_out[2, :, 2]),
+					  y_out[1, :, 2]),
 		expected_or_observed = vcat(["expected" for i in 1:50],
-									["observed" for i in 1:50],
-									["expected" for i in 1:50],
 									["observed" for i in 1:50]),
 		classify_or_fixation = vcat(["classify" for i in 1:50],
-									["classify" for i in 1:50],
-									["fixation" for i in 1:50],
-									["fixation" for i in 1:50]),
+									["classify" for i in 1:50]),
 	)
-	plt_output = data(df_out) * mapping(:time, :signal; color=:expected_or_observed, row=:classify_or_fixation) * visual(Lines)
+	plt_output = data(df_out) * mapping(:time, :signal; color=:expected_or_observed) * visual(Lines)
 	draw(plt_output)
 end
 
@@ -417,7 +415,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "5d33e3448ced1281399db505e3d917175bd2eeb3"
+project_hash = "52262dd20a5608c83b473910ce5812e4207fdf2b"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -2667,10 +2665,10 @@ version = "3.5.0+0"
 # ╟─b46a7d9b-49e8-4915-921d-01b4c97f0ad7
 # ╟─530f3619-065d-4e3f-be5b-bb57df65aad7
 # ╠═1e2ea060-7226-49ab-845b-a0f94c6b4c10
-# ╟─72ff1152-a2a1-4416-9c88-b223265d3d38
+# ╠═72ff1152-a2a1-4416-9c88-b223265d3d38
 # ╠═23ee7fc1-cd37-44a0-bb53-2cd98b770d78
 # ╟─b7700d73-7bb4-48e3-92ee-7b5717a7a27c
-# ╟─69164bed-e025-4a78-a23f-c0e77cb559f5
+# ╠═69164bed-e025-4a78-a23f-c0e77cb559f5
 # ╟─6308855b-e350-457b-93c5-58d31c33d03e
 # ╠═bc693cc5-c02f-4b64-aabe-37f1d37e91bf
 # ╟─2f3f3a63-7d7d-4101-8dc1-8c9ca645915d
@@ -2698,7 +2696,7 @@ version = "3.5.0+0"
 # ╟─a70c08db-369a-4b7c-819d-eeedb74a6c20
 # ╟─fe32b64a-3aee-428e-853f-ac559c71c5ed
 # ╟─2cb88e2f-3b35-4d76-a2f0-a34d28b488b9
-# ╟─35d4f8de-d0b8-4bf4-b554-4135d92356d2
+# ╠═35d4f8de-d0b8-4bf4-b554-4135d92356d2
 # ╟─422a08ff-c304-4b07-a4ef-3fb3a9b0d56c
 # ╠═a86d5a85-bbeb-41c2-b36c-5d2d2fdbe148
 # ╠═9e5d50dd-b619-4cba-8814-a8007524f13f
