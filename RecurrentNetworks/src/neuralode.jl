@@ -1,4 +1,5 @@
-using Lux, OrdinaryDiffEq, LinearAlgebra, ComponentArrays, NNlib
+using Lux, OrdinaryDiffEq, LinearAlgebra, ComponentArrays, NNlib, SciMLSensitivity
+include("load_SET_data.jl")
 
 struct NeuralODE{M <: Lux.AbstractExplicitLayer, R, So, Se, T, K} <: Lux.AbstractExplicitContainerLayer{(:model,)}
     model::M
@@ -31,6 +32,11 @@ function (n::NeuralODE)(x, ps, st)
     return solve(ensemble_prob, n.solver, EnsembleThreads(), trajectories = length(x.funcs); sensealg=n.sensealg, n.kwargs...), st
 end
 
+function Lux.apply(layer::NeuralODE, x::ArrayAndFunctionArray, ps, st::NamedTuple)
+	y, st = layer(x, ps, st)
+	return y, st
+end
+
 function ensemsol_to_array(x::EnsembleSolution)
 	return Array(x)
 end
@@ -48,7 +54,7 @@ function create_model(rng::AbstractRNG, gain_init::Float32, gain_recur::Float32,
                 NeuralODE(Chain(Parallel(+,
                                 SkipConnection(Chain(act_func, Dense(100,100; init_weight=recurrent_init, use_bias=false)), -),
                                 Dense(100,100; init_weight=input_init),
-                                internal_noise),
+                                WrappedFunction(internal_noise)),
                                 invtau_func),
                     rng, dt=0.01f0, save_start=false, adaptive=false), 
                 ensemsol_to_array, 

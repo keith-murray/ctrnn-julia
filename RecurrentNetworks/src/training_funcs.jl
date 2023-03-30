@@ -23,7 +23,7 @@ end
 function test_accuracy(model, ps, st, x, y_expected)
     st = Lux.testmode(st)
     y_observed, st = model(x, ps, st)
-    y_observed_end = transformVector(y_observed[1,end,:])
+    y_observed_end = transformVector(y_observed[1][1,end,:])
     num_matching = sum(y_observed_end .== y_expected[1,end,:])
     return num_matching / length(y_observed_end)
 end
@@ -50,7 +50,7 @@ function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, tra
     st_opt = Optimisers.setup(opt, ps)
     loss = construct_loss(L2_mag, AR_mag)
     accuracies = Lux.zeros32(rng, epochs+1)
-    IC = Lux.ones32(rng, neurons)
+    IC = Lux.ones32(rng, 100)
 
 
     ### Warmup the Model

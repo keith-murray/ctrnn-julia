@@ -79,7 +79,7 @@ function constructSignalFunctions(rng::AbstractRNG, SET::Int64, lag::Tuple{Float
 	signal_end = signal_begin.+pulse_width
 	signal_locs = [signal_begin signal_end]'[:]
 	loc_end = lag[2] + pulse_width
-	
+	"""
 	function signal_input_vecs(t)
 		val = signal_values[searchsortedfirst(signal_locs, t)]
 		vec = Lux.zeros32(rng, 100)
@@ -97,8 +97,8 @@ function constructSignalFunctions(rng::AbstractRNG, SET::Int64, lag::Tuple{Float
 		end
 		return vec
 	end
-	
-	return signal_input_vecs, signal_display_indx
+	"""
+	return (signal_values, signal_locs, vecs)
 end
 
 # ╔═╡ 2ca7fc6a-f3e7-4354-88f3-b246359434fb
@@ -108,16 +108,14 @@ md"The function below is going to generate the entire training dataset."
 function generateTrainingDataset(rng::AbstractRNG, output_file)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
-    display_funcs = []
     y_expected = Lux.zeros32(rng, 108)
     vecs = constructInputVecs(rng)
     count = 1
     
     for i in acceptedSETs
         for j in 1:6
-            signal_input_vecs, signal_display_indx = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
-            push!(input_funcs, signal_input_vecs)
-            push!(display_funcs, signal_display_indx)
+            signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+            push!(input_funcs, signal_features)
             y_expected[count] = 1.0f0
             count += 1
         end
@@ -125,9 +123,8 @@ function generateTrainingDataset(rng::AbstractRNG, output_file)
 
     for i in rejectedSETs
         for j in 1:3
-            signal_input_vecs, signal_display_indx = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
-            push!(input_funcs, signal_input_vecs)
-            push!(display_funcs, signal_display_indx)
+            signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+            push!(input_funcs, signal_features)
             y_expected[count] = -1.0f0
             count += 1
         end
@@ -136,7 +133,6 @@ function generateTrainingDataset(rng::AbstractRNG, output_file)
     # Serialize the outputs to a file
     open(output_file, "w") do f
         serialize(f, input_funcs)
-        serialize(f, display_funcs)
         serialize(f, constructOutput(rng, y_expected))
     end
 end
@@ -148,23 +144,20 @@ md"The function below is going to generate the entire testing dataset."
 function generateTestingDataset(rng::AbstractRNG, output_file)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
-    display_funcs = []
     y_expected = Lux.zeros32(rng, 27)
     vecs = constructInputVecs(rng)
     count = 1
     
     for i in acceptedSETs
-		signal_input_vecs, signal_display_indx = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
-		push!(input_funcs, signal_input_vecs)
-		push!(display_funcs, signal_display_indx)
+		signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+		push!(input_funcs, signal_features)
 		y_expected[count] = 1.0f0
 		count += 1
     end
 
     for i in rejectedSETs
-		signal_input_vecs, signal_display_indx = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
-		push!(input_funcs, signal_input_vecs)
-		push!(display_funcs, signal_display_indx)
+		signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+		push!(input_funcs, signal_features)
 		y_expected[count] = -1.0f0
 		count += 1
     end
@@ -172,7 +165,6 @@ function generateTestingDataset(rng::AbstractRNG, output_file)
     # Serialize the outputs to a file
     open(output_file, "w") do f
         serialize(f, input_funcs)
-        serialize(f, display_funcs)
         serialize(f, constructOutput(rng, y_expected))
     end
 end
@@ -184,6 +176,38 @@ begin
 	generateTrainingDataset(rng, "../data/training_data_108.jls")
 	generateTestingDataset(rng, "../data/testing_data_27.jls")
 end
+
+# ╔═╡ b2b1890d-338e-429a-9f10-71b33e9c68cd
+md"## Test serialization"
+
+# ╔═╡ 17810ffa-1f91-4e2f-81c3-b8893dff0c56
+function constructFunctions(func_pieces)
+	signal_values = func_pieces[1]
+	signal_locs = func_pieces[2]
+	vecs = func_pieces[3]
+
+	function signal(t)
+		val = signal_values[searchsortedfirst(signal_locs, t)]
+		vec = Lux.zeros32(rng, 100)
+		if val != 0
+			vec = vecs[val,:]
+		end
+		return vec
+	end
+	return signal
+end
+
+# ╔═╡ a4b73010-f353-4437-aa2a-0ef1e7f50464
+function loadData(output_file::String)
+	open(output_file, "r") do f
+		input_funcs = deserialize(f)
+		output = deserialize(f)
+		return [constructFunctions(x) for x in input_funcs], output
+	end
+end
+
+# ╔═╡ ce6e9c35-1ffe-4b25-8b01-48d1ece41045
+loadData("../data/training_data_108.jls")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -206,7 +230,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "9c7157a506b8738c6dd262e4d72815f2a7ef47f2"
+project_hash = "a6a8b28aacbf033a8135d8c6840fea7429579544"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -896,5 +920,9 @@ version = "17.4.0+0"
 # ╟─b9a1ddc9-86e0-4e5b-8e6f-b623a3f1714e
 # ╠═aa80beed-a235-4074-ba84-ba4562075481
 # ╠═ad118a60-6794-4230-8cd0-6cd3d0b52bf3
+# ╟─b2b1890d-338e-429a-9f10-71b33e9c68cd
+# ╠═17810ffa-1f91-4e2f-81c3-b8893dff0c56
+# ╠═a4b73010-f353-4437-aa2a-0ef1e7f50464
+# ╠═ce6e9c35-1ffe-4b25-8b01-48d1ece41045
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
