@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.18
+# v0.19.22
 
 using Markdown
 using InteractiveUtils
@@ -228,7 +228,7 @@ Lux = "~0.4.48"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.3"
+julia_version = "1.8.4"
 manifest_format = "2.0"
 project_hash = "a6a8b28aacbf033a8135d8c6840fea7429579544"
 
@@ -340,7 +340,7 @@ version = "4.6.1"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "0.5.2+0"
+version = "1.0.1+0"
 
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
