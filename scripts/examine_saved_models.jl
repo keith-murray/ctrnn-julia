@@ -43,7 +43,10 @@ function loadModel(output_file::String)
 end
 
 # ╔═╡ 11b5ac93-58f1-4822-a96b-07fd0387147b
-ps, accuracies = loadModel("../data/models/model_6.jls")
+ps, accuracies = loadModel("../data/models/model_12.jls")
+
+# ╔═╡ e25d6c92-5047-4892-8e02-d338ad46fada
+findmax(accuracies)
 
 # ╔═╡ 440b365c-858b-4f42-8b55-3b2a40097734
 begin
@@ -2272,6 +2275,7 @@ version = "3.5.0+0"
 # ╟─9fda22ce-e481-45b2-b9ae-84639a88a655
 # ╠═30e0e0f1-b4da-4eff-b4c4-913ba546d831
 # ╠═11b5ac93-58f1-4822-a96b-07fd0387147b
+# ╠═e25d6c92-5047-4892-8e02-d338ad46fada
 # ╠═440b365c-858b-4f42-8b55-3b2a40097734
 # ╠═a8ea6848-a944-43b6-9939-18c2912f5d5b
 # ╟─7563f413-ea07-4e41-8381-a22a45b8410b

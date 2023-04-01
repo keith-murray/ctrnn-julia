@@ -114,8 +114,76 @@ begin
 			0.0001f0,
 			0.0001f0,
 			0.0001f0]
-	rows = [run1, run2, run3, run4, run5, run6, run7]
+	run8 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			18,
+			1000,
+			1.0f0,
+			0.7f0,
+			1.0f0,
+			0.02f0,
+			0.075f0,
+			0.000001f0,
+			0.0001f0,
+			0.0001f0]
+	run9 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			27,
+			1000,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.10f0,
+			0.000001f0,
+			0.0001f0,
+			0.0001f0]
+	run10 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			27,
+			1000,
+			1.0f0,
+			0.75f0,
+			1.0f0,
+			0.02f0,
+			0.20f0,
+			0.000001f0,
+			0.0001f0,
+			0.0001f0]
+	run11 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			27,
+			1000,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.125f0,
+			0.000001f0,
+			0.0001f0,
+			0.00001f0]
+	run12 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			27,
+			10000,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.10f0,
+			0.000001f0,
+			0.0001f0,
+			0.0001f0]
+	rows = [run1, run2, run3, run4, run5, run6, run7, run8, run9, run10, run11, run12]
 end
+
+# ╔═╡ 8a89e475-1f68-42c5-b58f-8d4dee94cb11
+md"Run 9 is most effective so far."
 
 # ╔═╡ e1418d9c-1150-4851-9e72-f76461fed8fe
 column_names = ["training", "testing", "seed", "batch", "epochs", "gain_init",
@@ -509,6 +577,7 @@ version = "17.4.0+0"
 # ╠═f168bb5c-408f-4d20-b5f3-272038ce6ad5
 # ╟─6e156358-ffde-4ab6-8767-e94588da6e3b
 # ╠═34acfd39-e3b7-42d3-891c-a2cb27150cce
+# ╟─8a89e475-1f68-42c5-b58f-8d4dee94cb11
 # ╠═e1418d9c-1150-4851-9e72-f76461fed8fe
 # ╠═ea6f558c-0209-4cb0-aaa7-c887aa5bd67b
 # ╠═ae4bdd8a-6081-4b5b-9469-add812aed91a
