@@ -45,11 +45,76 @@ begin
 			0.8f0,
 			1.0f0,
 			0.02f0,
+			0.025f0,
+			0.0001f0,
+			0.0001f0,
+			0.0001f0]
+	run3 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			27,
+			500,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.025f0,
+			0.00001f0,
+			0.00001f0,
+			0.0001f0]
+	run4 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			18,
+			500,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.025f0,
+			0.00001f0,
+			0.00001f0,
+			0.0001f0]
+	run5 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			18,
+			500,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
 			0.05f0,
 			0.00001f0,
 			0.00001f0,
 			0.0001f0]
-	rows = [run1, run2]
+	run6 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			18,
+			500,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.05f0,
+			0.0001f0,
+			0.0001f0,
+			0.0001f0]
+	run7 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			18,
+			500,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.10f0,
+			0.0001f0,
+			0.0001f0,
+			0.0001f0]
+	rows = [run1, run2, run3, run4, run5, run6, run7]
 end
 
 # ╔═╡ e1418d9c-1150-4851-9e72-f76461fed8fe
@@ -86,21 +151,6 @@ md"## Save DataFrame"
 
 # ╔═╡ 0a88be8f-cc98-44d3-8929-8375d2498a67
 save("../data/setup_data.jld2", "df", df)
-
-# ╔═╡ ff8938e2-b23e-452e-96c9-2d90bf2a465a
-md"## Test DataFrame"
-
-# ╔═╡ 5a08b9f8-5217-4062-a87f-b98e64a82a11
-row2 = eachrow(df)[2]
-
-# ╔═╡ 74e11a56-b3ed-4556-8979-db6a12c6ad6e
-row2[1]
-
-# ╔═╡ db9d34e3-a299-43f1-b4ca-6b15ab484578
-row2[7]
-
-# ╔═╡ eb9f3e78-3bf7-4dd7-ac0e-65b70afd5bcd
-row2[13]
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -465,10 +515,5 @@ version = "17.4.0+0"
 # ╠═3b1edfd2-6d9d-444d-ab75-18a6a790cbf7
 # ╟─fc9bfc62-9dc9-461b-a59b-0f8dd768721b
 # ╠═0a88be8f-cc98-44d3-8929-8375d2498a67
-# ╟─ff8938e2-b23e-452e-96c9-2d90bf2a465a
-# ╠═5a08b9f8-5217-4062-a87f-b98e64a82a11
-# ╠═74e11a56-b3ed-4556-8979-db6a12c6ad6e
-# ╠═db9d34e3-a299-43f1-b4ca-6b15ab484578
-# ╠═eb9f3e78-3bf7-4dd7-ac0e-65b70afd5bcd
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

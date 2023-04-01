@@ -31,3 +31,9 @@ The notebooks were used to prototype code before writing it into the `RecurrentN
     1. Certain features of the `pilot_neuralode_training.jl` script were changed to be more like the "Neural dynamics and geometry for transitive inference" paper by Kay et al.
 8. `visualize_neuralode_results.jl`
     1. This script is a further iteration of `neuralode_like_kay.jl` with visualizations of the PCA of recurrent trajectories.
+9. `training_testing_data.jl`
+    1. This script generates the testing and training data that are used for training and testing the NeuralODEs. This script only needs to be run once.
+10. `create_scheduler.jl`
+    1. This script generates all the training conditions for training NeuralODEs in a principled and reproducable manner.
+11. `examine_saved_models.jl`
+    1. This script can be used to examine the training and testing accuracies for a trained model. It will also use PCA to visualize the low-dimensional dynamcis.
