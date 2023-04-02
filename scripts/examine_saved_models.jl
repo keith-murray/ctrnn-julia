@@ -43,7 +43,7 @@ function loadModel(output_file::String)
 end
 
 # ╔═╡ 11b5ac93-58f1-4822-a96b-07fd0387147b
-ps, accuracies = loadModel("../data/models/model_12.jls")
+ps, accuracies = loadModel("../data/models/model_13.jls")
 
 # ╔═╡ e25d6c92-5047-4892-8e02-d338ad46fada
 findmax(accuracies)

@@ -179,7 +179,20 @@ begin
 			0.000001f0,
 			0.0001f0,
 			0.0001f0]
-	rows = [run1, run2, run3, run4, run5, run6, run7, run8, run9, run10, run11, run12]
+	run13 = ["./data/training_data_108.jls", 
+			"./data/testing_data_27.jls",
+			0,
+			27,
+			6467,
+			1.0f0,
+			0.8f0,
+			1.0f0,
+			0.02f0,
+			0.10f0,
+			0.000001f0,
+			0.0001f0,
+			0.0001f0]
+	rows = [run1, run2, run3, run4, run5, run6, run7, run8, run9, run10, run11, run12, run13]
 end
 
 # ╔═╡ 8a89e475-1f68-42c5-b58f-8d4dee94cb11
