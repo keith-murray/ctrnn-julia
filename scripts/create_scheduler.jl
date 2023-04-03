@@ -429,11 +429,22 @@ begin
 			0.00001f0,
 			0.00001f0,
 			0.0001f0]
-	rows = [run1, run2, run3, run4, run5, run6, run7, run8, run9, run10, run11, run12, run13, run14, run15, run16, run17, run18, run19, run20, run21, run22, run23, run24, run25, run26, run27, run28, run29]
+	run30 = ["./data/data_540.jls", 
+			"./data/data_27.jls",
+			0,
+			108,
+			2500,
+			1.0f0,
+			0.75f0,
+			1.5f0,
+			0.01f0,
+		    0.50f0,
+			0.10f0,
+			0.000001f0,
+			0.000001f0,
+			0.0001f0]
+	rows = [run1, run2, run3, run4, run5, run6, run7, run8, run9, run10, run11, run12, run13, run14, run15, run16, run17, run18, run19, run20, run21, run22, run23, run24, run25, run26, run27, run28, run29, run30]
 end
-
-# ╔═╡ 724737d8-01ba-4adc-9435-0129212d6753
-md"Run4 is good"
 
 # ╔═╡ e1418d9c-1150-4851-9e72-f76461fed8fe
 column_names = ["training", "testing", "seed", "batch", "epochs", "gain_init",
@@ -827,7 +838,6 @@ version = "17.4.0+0"
 # ╠═f168bb5c-408f-4d20-b5f3-272038ce6ad5
 # ╟─6e156358-ffde-4ab6-8767-e94588da6e3b
 # ╠═34acfd39-e3b7-42d3-891c-a2cb27150cce
-# ╠═724737d8-01ba-4adc-9435-0129212d6753
 # ╠═e1418d9c-1150-4851-9e72-f76461fed8fe
 # ╠═ea6f558c-0209-4cb0-aaa7-c887aa5bd67b
 # ╠═ae4bdd8a-6081-4b5b-9469-add812aed91a

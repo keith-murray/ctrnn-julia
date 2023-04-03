@@ -3,7 +3,7 @@ include("load_SET_data.jl")
 
 meansquarederror(y_pred, y) =  mean(abs2, y_pred .- y)
 
-AR_reg(y) = mean(abs2, y)
+AR_reg(y) = 0.01f0 * mean(abs2, y)
 
 function construct_loss(AR_mag::Float32)
     function loss(x, y, model, ps, st)
