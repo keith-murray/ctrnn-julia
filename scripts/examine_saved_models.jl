@@ -43,10 +43,7 @@ function loadModel(output_file::String)
 end
 
 # ╔═╡ 11b5ac93-58f1-4822-a96b-07fd0387147b
-ps, accuracies = loadModel("../data/models/model_29.jls")
-
-# ╔═╡ e25d6c92-5047-4892-8e02-d338ad46fada
-findmax(accuracies)
+ps, accuracies = loadModel("../data/models/model_30.jls")
 
 # ╔═╡ 440b365c-858b-4f42-8b55-3b2a40097734
 begin
@@ -55,7 +52,7 @@ begin
 end
 
 # ╔═╡ a8ea6848-a944-43b6-9939-18c2912f5d5b
-model, ps_no, st = create_model(rng, 1.0f0, 0.8f0, 1.0f0, 0.02f0, 1.00f0, 0.00f0)
+model, ps_no, st = create_model(rng, 1.0f0, 0.8f0, 1.0f0, 0.01f0, 0.50f0, 0.00f0)
 
 # ╔═╡ 7563f413-ea07-4e41-8381-a22a45b8410b
 md"## Load data"
@@ -102,26 +99,26 @@ time_range = 0.01f0:0.01f0:0.50f0
 # ╔═╡ 7b8f283b-4a39-443b-b7cc-300301db3c46
 (y_out, r_out), st_out = model(training_data[1], ps, st)
 
-# ╔═╡ 6c4279b5-16f3-4f9d-bff4-bd35c5de8d8f
-cat_r_out = reduce(hcat, r_out[:,1:45,i] for i in 1:size(y_out)[3])
+# ╔═╡ bc074c58-827e-4f1c-a35b-74e9aa789e0b
+cat_r_out = reduce(hcat, r_out[:,:,i] for i in 1:size(y_out)[3])
 
 # ╔═╡ 3c3f4b43-e42f-4416-aed5-e987c002ddf7
-M = fit(PCA, cat_r_out; maxoutdim=3)
+M = fit(PCA, cat_r_out;)
 
 # ╔═╡ a6b35df4-baae-4b23-8032-4bd04277213c
 rates = predict(M, cat_r_out)
 
 # ╔═╡ f628a6ff-d61c-428b-9a06-b5e998bfdb5c
 df_rates = DataFrame(
-	time = vcat(time_range[1:45], time_range[1:45]),
-	pc_1 = vcat(rates[1,1:45], rates[1,2251:2295]),
-	pc_2 = vcat(rates[2,1:45], rates[2,2251:2295]),
-	pc_3 = vcat(rates[3,1:45], rates[3,2251:2295]),
-	type_of_signal = vcat(["reject" for i in 1:45],
-						  ["accept" for i in 1:45]),
-	begin_end = vcat(["begin" for i in 1:20],
+	time = vcat(time_range, time_range),
+	pc_1 = vcat(rates[1,1:50], rates[1,26951:end]),
+	pc_2 = vcat(rates[2,1:50], rates[2,26951:end]),
+	pc_3 = vcat(rates[3,1:50], rates[3,26951:end]),
+	type_of_signal = vcat(["reject" for i in 1:50],
+						  ["accept" for i in 1:50]),
+	begin_end = vcat(["begin" for i in 1:25],
 					 ["end" for i in 1:25],
-					 ["begin" for i in 1:20],
+					 ["begin" for i in 1:25],
 					 ["end" for i in 1:25]),
 )
 
@@ -2275,7 +2272,6 @@ version = "3.5.0+0"
 # ╟─9fda22ce-e481-45b2-b9ae-84639a88a655
 # ╠═30e0e0f1-b4da-4eff-b4c4-913ba546d831
 # ╠═11b5ac93-58f1-4822-a96b-07fd0387147b
-# ╠═e25d6c92-5047-4892-8e02-d338ad46fada
 # ╠═440b365c-858b-4f42-8b55-3b2a40097734
 # ╠═a8ea6848-a944-43b6-9939-18c2912f5d5b
 # ╟─7563f413-ea07-4e41-8381-a22a45b8410b
@@ -2291,7 +2287,7 @@ version = "3.5.0+0"
 # ╟─ac2f1475-eb3c-4196-9f5f-e6820f5bcbc2
 # ╠═fea68b73-d74a-4759-997c-ef138a71a3b4
 # ╠═7b8f283b-4a39-443b-b7cc-300301db3c46
-# ╠═6c4279b5-16f3-4f9d-bff4-bd35c5de8d8f
+# ╠═bc074c58-827e-4f1c-a35b-74e9aa789e0b
 # ╠═3c3f4b43-e42f-4416-aed5-e987c002ddf7
 # ╠═a6b35df4-baae-4b23-8032-4bd04277213c
 # ╟─f628a6ff-d61c-428b-9a06-b5e998bfdb5c
