@@ -32,16 +32,10 @@ function constructIterator(rng::AbstractRNG, batch::Int64, training_data, IC::Ve
     funs = training_data[1]
     y_expecteds = training_data[2]
     rand_indexes = randperm(rng, size(y_expecteds)[3])
-    iterator = []
     training_iters = div(size(y_expecteds)[3], batch)
 
     iter_indexes = [rand_indexes[(i-1)*batch+1:i*batch] for i in 1:training_iters]
-    iter_funcs = [FunctionArray(funs[iter_indexes[i]]) for i in 1:training_iters]
-    iter_y_expecteds = [y_expecteds[:,:,iter_indexes[i]] for i in 1:training_iters]
-
-    for i in 1:training_iters
-        push!(iterator, (ArrayAndFunctionArray(IC, iter_funcs[i]), iter_y_expecteds[i]))
-    end
+    iterator = [(ArrayAndFuncs(IC, funs[iter_indexes[i]]), y_expecteds[:,:,iter_indexes[i]]) for i in 1:training_iters]
     return iterator
 end
 
@@ -62,6 +56,7 @@ function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, tra
 
     ### Lets train the model
     for epoch in 1:epochs
+        stime = time()
         iterator = constructIterator(rng, batch, training_data, IC)
         for (x, y) in iterator
             (l, st), back = pullback(p -> loss(x, y, model, p, st), ps)
@@ -69,7 +64,12 @@ function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, tra
             gs = back((one(l), nothing))[1]
             st_opt, ps = Optimisers.update(st_opt, ps, gs)
         end
-        accuracies[epoch+1] = test_accuracy(model, ps, st, testing_data[1], testing_data[2])
+
+        ttime = time() - stime
+        accuracy_training_current = test_accuracy(model, ps, st, ArrayAndFuncs(IC, training_data[1]), training_data[2])
+        accuracy_test_current = test_accuracy(model, ps, st, testing_data[1], testing_data[2])
+        accuracies[epoch+1] = accuracy_test_current
+        println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Training Accuracy: " * "$(round(accuracy_training_current * 100; digits=2))% \t " * "Test Accuracy: $(round(accuracy_test_current * 100; digits=2))%")
     end
 	return ps, accuracies
 end

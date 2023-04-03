@@ -39,7 +39,7 @@ md"The function below creates the input vectors for the NeuralODE."
 
 # ╔═╡ a0f22d01-220d-48ae-9b1e-7f789d062079
 function constructInputVecs(rng::AbstractRNG)
-	return Lux.randn32(rng, 3, 100)
+	return vcat(Lux.zeros32(rng, 1, 100), Lux.randn32(rng, 3, 100))
 end
 
 # ╔═╡ 2f9b1355-1e07-4ccf-b3ab-857cd9ed5cb3
@@ -79,42 +79,22 @@ function constructSignalFunctions(rng::AbstractRNG, SET::Int64, lag::Tuple{Float
 	signal_end = signal_begin.+pulse_width
 	signal_locs = [signal_begin signal_end]'[:]
 	loc_end = lag[2] + pulse_width
-	"""
-	function signal_input_vecs(t)
-		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = Lux.zeros32(rng, 100)
-		if val != 0
-			vec = vecs[val,:]
-		end
-		return vec
-	end
-
-	function signal_display_indx(t)
-		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = Lux.zeros32(rng, 3)
-		if val != 0
-			vec[val] = 1.0f0
-		end
-		return vec
-	end
-	"""
-	return (signal_values, signal_locs, vecs)
+	return (signal_values .+ 1, signal_locs, vecs)
 end
 
 # ╔═╡ 2ca7fc6a-f3e7-4354-88f3-b246359434fb
 md"The function below is going to generate the entire training dataset."
 
 # ╔═╡ 36ca73ce-afde-460a-bc49-2a7386992e9a
-function generateTrainingDataset(rng::AbstractRNG, output_file)
+function generateTrainingDataset(rng::AbstractRNG, output_file, vecs)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
-    y_expected = Lux.zeros32(rng, 108)
-    vecs = constructInputVecs(rng)
+    y_expected = Lux.zeros32(rng, 540)
     count = 1
     
     for i in acceptedSETs
-        for j in 1:6
-            signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+        for j in 1:30
+            signal_features = constructSignalFunctions(rng, i, (0.03f0,0.40f0), 0.05f0, 0.02f0, vecs)
             push!(input_funcs, signal_features)
             y_expected[count] = 1.0f0
             count += 1
@@ -122,8 +102,8 @@ function generateTrainingDataset(rng::AbstractRNG, output_file)
     end
 
     for i in rejectedSETs
-        for j in 1:3
-            signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+        for j in 1:15
+            signal_features = constructSignalFunctions(rng, i, (0.03f0,0.40f0), 0.05f0, 0.02f0, vecs)
             push!(input_funcs, signal_features)
             y_expected[count] = -1.0f0
             count += 1
@@ -141,22 +121,21 @@ end
 md"The function below is going to generate the entire testing dataset."
 
 # ╔═╡ aa80beed-a235-4074-ba84-ba4562075481
-function generateTestingDataset(rng::AbstractRNG, output_file)
+function generateTestingDataset(rng::AbstractRNG, output_file, vecs)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
     y_expected = Lux.zeros32(rng, 27)
-    vecs = constructInputVecs(rng)
     count = 1
     
     for i in acceptedSETs
-		signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+		signal_features = constructSignalFunctions(rng, i, (0.03f0,0.40f0), 0.05f0, 0.02f0, vecs)
 		push!(input_funcs, signal_features)
 		y_expected[count] = 1.0f0
 		count += 1
     end
 
     for i in rejectedSETs
-		signal_features = constructSignalFunctions(rng, i, (0.05f0,0.38f0), 0.10f0, 0.02f0, vecs)
+		signal_features = constructSignalFunctions(rng, i, (0.03f0,0.40f0), 0.05f0, 0.02f0, vecs)
 		push!(input_funcs, signal_features)
 		y_expected[count] = -1.0f0
 		count += 1
@@ -173,28 +152,27 @@ end
 begin
     rng = Random.default_rng()
     Random.seed!(rng, 0)
-	generateTrainingDataset(rng, "../data/training_data_108.jls")
-	generateTestingDataset(rng, "../data/testing_data_27.jls")
+	vecs = constructInputVecs(rng)
+	generateTrainingDataset(rng, "../data/data_540.jls", vecs)
+	generateTestingDataset(rng, "../data/data_27.jls", vecs)
 end
 
 # ╔═╡ b2b1890d-338e-429a-9f10-71b33e9c68cd
 md"## Test serialization"
 
-# ╔═╡ 17810ffa-1f91-4e2f-81c3-b8893dff0c56
-function constructFunctions(func_pieces)
-	signal_values = func_pieces[1]
-	signal_locs = func_pieces[2]
-	vecs = func_pieces[3]
-
-	function signal(t)
-		val = signal_values[searchsortedfirst(signal_locs, t)]
-		vec = Lux.zeros32(rng, 100)
-		if val != 0
-			vec = vecs[val,:]
-		end
-		return vec
+# ╔═╡ 02c6940e-0ac0-4942-8fe5-1dd836e5c594
+begin
+	struct Interpolate
+	    SET::Array{Int64, 1}
+	    locations::Array{Float32, 1}
+		vecs::Array{Float32, 2}
 	end
-	return signal
+	
+	function (itp::Interpolate)(t::Float32)
+		i = searchsortedfirst(itp.locations, t)
+	    @inbounds val = itp.SET[i]
+	    @inbounds itp.vecs[val, :]
+	end
 end
 
 # ╔═╡ a4b73010-f353-4437-aa2a-0ef1e7f50464
@@ -202,12 +180,18 @@ function loadData(output_file::String)
 	open(output_file, "r") do f
 		input_funcs = deserialize(f)
 		output = deserialize(f)
-		return [constructFunctions(x) for x in input_funcs], output
+		return [Interpolate(x[1], x[2], x[3]) for x in input_funcs], output
 	end
 end
 
 # ╔═╡ ce6e9c35-1ffe-4b25-8b01-48d1ece41045
-loadData("../data/training_data_108.jls")
+interpolate_array, ouput = loadData("../data/data_27.jls")
+
+# ╔═╡ 5f7bec94-9367-43ce-9919-7366db3b2c81
+typeof(interpolate_array)
+
+# ╔═╡ 819c42c8-d1ac-44a3-a94b-ef872ba69fda
+length(interpolate_array)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -921,8 +905,10 @@ version = "17.4.0+0"
 # ╠═aa80beed-a235-4074-ba84-ba4562075481
 # ╠═ad118a60-6794-4230-8cd0-6cd3d0b52bf3
 # ╟─b2b1890d-338e-429a-9f10-71b33e9c68cd
-# ╠═17810ffa-1f91-4e2f-81c3-b8893dff0c56
+# ╠═02c6940e-0ac0-4942-8fe5-1dd836e5c594
 # ╠═a4b73010-f353-4437-aa2a-0ef1e7f50464
 # ╠═ce6e9c35-1ffe-4b25-8b01-48d1ece41045
+# ╠═5f7bec94-9367-43ce-9919-7366db3b2c81
+# ╠═819c42c8-d1ac-44a3-a94b-ef872ba69fda
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

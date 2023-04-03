@@ -43,7 +43,7 @@ function loadModel(output_file::String)
 end
 
 # ╔═╡ 11b5ac93-58f1-4822-a96b-07fd0387147b
-ps, accuracies = loadModel("../data/models/model_13.jls")
+ps, accuracies = loadModel("../data/models/model_1.jls")
 
 # ╔═╡ e25d6c92-5047-4892-8e02-d338ad46fada
 findmax(accuracies)
@@ -63,15 +63,15 @@ md"## Load data"
 # ╔═╡ 96f315e3-428e-4bf3-a206-58573ce6204e
 begin
 	IC = ones(Float32, 100)
-    training_input_funcs, training_output = loadData("../data/training_data_108.jls")
-    testing_input_funcs, testing_output = loadData("../data/testing_data_27.jls")
+    training_input_funcs, training_output = loadData("../data/data_540.jls")
+    testing_input_funcs, testing_output = loadData("../data/data_27.jls")
 end
 
 # ╔═╡ 09968292-f475-4916-9dca-38274c32230e
-training_data = (ArrayAndFunctionArray(IC, FunctionArray(training_input_funcs)), training_output)
+training_data = (ArrayAndFuncs(IC, training_input_funcs), training_output)
 
 # ╔═╡ cd4b79b2-8c84-4ee7-909e-d670749679a1
-testing_data = (ArrayAndFunctionArray(IC, FunctionArray(testing_input_funcs)), testing_output)
+testing_data = (ArrayAndFuncs(IC, testing_input_funcs), testing_output)
 
 # ╔═╡ 37ccbba2-861b-46dd-a25d-1068ad7e124a
 md"## Test model"
