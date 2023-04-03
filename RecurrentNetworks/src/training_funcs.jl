@@ -3,14 +3,12 @@ include("load_SET_data.jl")
 
 meansquarederror(y_pred, y) =  mean(abs2, y_pred .- y)
 
-L2_reg(ps) = sum(abs2, ps.layer_2.layer_1.layer_2.weight) + sum(abs2, ps.layer_2.layer_1.layer_1.layer_2.weight) + sum(abs2, ps.layer_5.layer_1.weight)
-
 AR_reg(y) = mean(abs2, y)
 
-function construct_loss(L2_mag::Float32, AR_mag::Float32)
+function construct_loss(AR_mag::Float32)
     function loss(x, y, model, ps, st)
         y_pred, st = model(x, ps, st)
-        l = meansquarederror(y_pred[1], y) + L2_mag*L2_reg(ps) + AR_mag*AR_reg(y_pred[2])
+        l = meansquarederror(y_pred[1][:,46:end,:], y[:,46:end,:]) + AR_mag*AR_reg(y_pred[2])
         return l, st
     end
     return loss
@@ -39,20 +37,37 @@ function constructIterator(rng::AbstractRNG, batch::Int64, training_data, IC::Ve
     return iterator
 end
 
+function constructResults(loss, model, ps, st, training_data, testing_data, IC)
+    loss_training_current = loss(ArrayAndFuncs(IC, training_data[1]), training_data[2], model, ps, st)[1]
+    loss_testing_current = loss(testing_data[1], testing_data[2], model, ps, st)[1]
+    accuracy_training_current = test_accuracy(model, ps, st, ArrayAndFuncs(IC, training_data[1]), training_data[2])
+    accuracy_test_current = test_accuracy(model, ps, st, testing_data[1], testing_data[2])
+    return [loss_training_current, loss_testing_current, accuracy_training_current, accuracy_test_current]
+end
+
+function printUpdates(epoch, epochs, ttime, current_results)
+    println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Training Loss: " * "$(round(current_results[1]; digits=4)) \t " * "Test Accuracy: $(round(current_results[2]; digits=4))")
+    println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Training Accuracy: " * "$(round(current_results[3] * 100; digits=2))% \t " * "Test Accuracy: $(round(current_results[4] * 100; digits=2))%")
+end
+
 function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, training_data, testing_data, L2_mag::Float32, AR_mag::Float32, lr::Float32)	
-    opt = Optimisers.ADAM(lr)
+    opt = Optimisers.OptimiserChain(Optimisers.ClipGrad(5.0), Optimisers.AdamW(lr, (9f-1, 9.99f-1), L2_mag))
     st_opt = Optimisers.setup(opt, ps)
-    loss = construct_loss(L2_mag, AR_mag)
-    accuracies = Lux.zeros32(rng, epochs+1)
+    loss = construct_loss(AR_mag)
+    accuracies = Lux.zeros32(rng, 4, epochs+1)
     IC = Lux.ones32(rng, 100)
 
 
     ### Warmup the Model
+    stime = time()
     iterator = constructIterator(rng, batch, training_data, IC)
     loss(iterator[1][1], iterator[1][2], model, ps, st)
     (l, _), back = pullback(p -> loss(iterator[1][1], iterator[1][2], model, p, st), ps)
     back((one(l), nothing))
-    accuracies[1] = test_accuracy(model, ps, st, testing_data[1], testing_data[2])
+    current_results = constructResults(loss, model, ps, st, training_data, testing_data, IC)
+    ttime = time() - stime
+    accuracies[:, 1] = current_results
+    printUpdates(0, epochs, ttime, current_results)
 
     ### Lets train the model
     for epoch in 1:epochs
@@ -65,11 +80,10 @@ function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, tra
             st_opt, ps = Optimisers.update(st_opt, ps, gs)
         end
 
+        current_results = constructResults(loss, model, ps, st, training_data, testing_data, IC)
         ttime = time() - stime
-        accuracy_training_current = test_accuracy(model, ps, st, ArrayAndFuncs(IC, training_data[1]), training_data[2])
-        accuracy_test_current = test_accuracy(model, ps, st, testing_data[1], testing_data[2])
-        accuracies[epoch+1] = accuracy_test_current
-        println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Training Accuracy: " * "$(round(accuracy_training_current * 100; digits=2))% \t " * "Test Accuracy: $(round(accuracy_test_current * 100; digits=2))%")
+        accuracies[:, epoch+1] = current_results
+        printUpdates(epoch, epochs, ttime, current_results)
     end
 	return ps, accuracies
 end
