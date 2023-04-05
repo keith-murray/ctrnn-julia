@@ -8,13 +8,11 @@ using InteractiveUtils
 using Serialization, ComponentArrays, Lux, Random, OrdinaryDiffEq, LinearAlgebra, NNlib, SciMLSensitivity, DataFrames, Statistics, Optimisers, Zygote, MultivariateStats, AlgebraOfGraphics, CairoMakie
 
 # ╔═╡ 402e5461-5c4b-40bf-84ab-95be1fc219e9
-include("../RecurrentNetworks/src/load_SET_data.jl")
-
-# ╔═╡ 75b82178-a950-45e5-b322-9119e8be09ed
-include("../RecurrentNetworks/src/neuralode.jl")
-
-# ╔═╡ 9f5b1712-b28f-49be-a2a4-279f2b134d3f
-include("../RecurrentNetworks/src/training_funcs.jl")
+begin
+	include("../RecurrentNetworks/src/load_SET_data.jl")
+	include("../RecurrentNetworks/src/neuralode.jl")
+	include("../RecurrentNetworks/src/training_funcs.jl")
+end
 
 # ╔═╡ 1b45cd8a-cfe7-11ed-24dc-a1c5dfe6e994
 md"# Examine saved models"
@@ -42,17 +40,23 @@ function loadModel(output_file::String)
 	end
 end
 
-# ╔═╡ 11b5ac93-58f1-4822-a96b-07fd0387147b
-ps, accuracies = loadModel("../data/models/model_30.jls")
-
 # ╔═╡ 440b365c-858b-4f42-8b55-3b2a40097734
 begin
+	ps, accuracies = loadModel("../data/models/model_31.jls")
 	rng = Random.default_rng()
     Random.seed!(rng, 0)
+	model, ps_no, st = create_model(rng, 1.0f0, 0.75f0, 1.5f0, 0.01f0, 0.00f0, 0.00f0)
 end
 
-# ╔═╡ a8ea6848-a944-43b6-9939-18c2912f5d5b
-model, ps_no, st = create_model(rng, 1.0f0, 0.8f0, 1.0f0, 0.01f0, 0.50f0, 0.00f0)
+# ╔═╡ 0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
+begin
+	df_accuracies = DataFrame(
+	    epochs = 1:length(accuracies[1,:]),
+	    loss = accuracies[1,:],
+	)
+	plt_accuracies = data(df_accuracies) * mapping(:epochs, :loss) * visual(Lines)
+	draw(plt_accuracies)
+end
 
 # ╔═╡ 7563f413-ea07-4e41-8381-a22a45b8410b
 md"## Load data"
@@ -62,13 +66,18 @@ begin
 	IC = ones(Float32, 100)
     training_input_funcs, training_output = loadData("../data/data_540.jls")
     testing_input_funcs, testing_output = loadData("../data/data_27.jls")
+	training_data = (ArrayAndFuncs(IC, training_input_funcs), training_output)
+	testing_data = (ArrayAndFuncs(IC, testing_input_funcs), testing_output)
 end
 
-# ╔═╡ 09968292-f475-4916-9dca-38274c32230e
-training_data = (ArrayAndFuncs(IC, training_input_funcs), training_output)
+# ╔═╡ a1d043d0-5bb1-4147-9911-5c711bf0da6f
+md"### Add display method for `Interpolate`"
 
-# ╔═╡ cd4b79b2-8c84-4ee7-909e-d670749679a1
-testing_data = (ArrayAndFuncs(IC, testing_input_funcs), testing_output)
+# ╔═╡ 87ad1e54-95c1-4774-883f-f80cee036b28
+function (itp::Interpolate)(t::Float64)
+	i = searchsortedfirst(itp.locations, t)
+	@inbounds itp.SET[i] - 1
+end
 
 # ╔═╡ 37ccbba2-861b-46dd-a25d-1068ad7e124a
 md"## Test model"
@@ -85,55 +94,120 @@ md"### Testing data"
 # ╔═╡ acd468ca-3d9e-44fb-afcc-4ce6bbb978f2
 test_accuracy(model, ps, st, testing_data[1], testing_data[2])
 
+# ╔═╡ 61615ec6-7032-4f77-b2db-8b22b8c2c0d2
+md"## What is the testing SET number?"
+
+# ╔═╡ 6077af0b-1833-46f4-8c68-2a5b7a23c69d
+SET_num = 27
+
 # ╔═╡ f2977d62-4b44-44de-9cd1-a7ecfadc0423
 md"## Visualize low-dimensional dynamics"
 
-# ╔═╡ ac2f1475-eb3c-4196-9f5f-e6820f5bcbc2
-md"""
-Note: these visualizations are only for training data. I would like to include both training and testing data for the full visualization of the low-dimensional dynamics.
-"""
-
-# ╔═╡ fea68b73-d74a-4759-997c-ef138a71a3b4
-time_range = 0.01f0:0.01f0:0.50f0
+# ╔═╡ 89518552-0c8c-4fad-8cf1-2a79f70e3d34
+function input_to_mat(arr)
+	m = zeros(Int, 3, 50)
+	m[1, arr .== 1] .= 1
+	m[2, arr .== 2] .= 1
+	m[3, arr .== 3] .= 1
+	return m
+end
 
 # ╔═╡ 7b8f283b-4a39-443b-b7cc-300301db3c46
-(y_out, r_out), st_out = model(training_data[1], ps, st)
+begin
+	time_range = 0.01f0:0.01f0:0.50f0
+	input = input_to_mat(reduce(vcat, testing_input_funcs[SET_num].(0.01:0.01:0.50)))
+	(y_out_train, r_out_train), st_out = model(training_data[1], ps, st)
+	(y_out_test, r_out_test), st_out = model(testing_data[1], ps, st)
+	cat_r_out = reduce(hcat, r_out_train[:,:,i] for i in 1:size(r_out_train)[3])
+	M = fit(PCA, cat_r_out;)
+	pc_rates = predict(M, r_out_test[:,:,SET_num])
+	y = y_out_test[1,:,SET_num]
+	df_rates = DataFrame(
+		time = time_range,
+		out = y,
+		pc_1= pc_rates[1,:],
+		pc_2 = pc_rates[2,:],
+		pc_3 = pc_rates[3,:],
+		pc_4 = pc_rates[4,:],
+		pc_5 = pc_rates[5,:],
+	)
+	md"This is data."
+end
 
-# ╔═╡ bc074c58-827e-4f1c-a35b-74e9aa789e0b
-cat_r_out = reduce(hcat, r_out[:,:,i] for i in 1:size(y_out)[3])
+# ╔═╡ 22e0610d-b673-4a25-8a99-341235eed758
+begin
+	df_input = DataFrame(
+	    time = vcat(time_range, time_range, time_range, time_range),
+	    signal = vcat(input[1, :], 
+					  input[2, :],
+					  input[3, :],
+					  y),
+		type_of_signal = vcat(["attribute 1" for i in 1:50],
+							  ["attribute 2" for i in 1:50],
+							  ["attribute 3" for i in 1:50],
+							  ["output" for i in 1:50]),
+	)
+	plt_input = data(df_input) * mapping(:time, :signal; color=:type_of_signal) * visual(Lines)
+	draw(plt_input)
+end
 
-# ╔═╡ 3c3f4b43-e42f-4416-aed5-e987c002ddf7
-M = fit(PCA, cat_r_out;)
-
-# ╔═╡ a6b35df4-baae-4b23-8032-4bd04277213c
-rates = predict(M, cat_r_out)
-
-# ╔═╡ f628a6ff-d61c-428b-9a06-b5e998bfdb5c
-df_rates = DataFrame(
-	time = vcat(time_range, time_range),
-	pc_1 = vcat(rates[1,1:50], rates[1,26951:end]),
-	pc_2 = vcat(rates[2,1:50], rates[2,26951:end]),
-	pc_3 = vcat(rates[3,1:50], rates[3,26951:end]),
-	type_of_signal = vcat(["reject" for i in 1:50],
-						  ["accept" for i in 1:50]),
-	begin_end = vcat(["begin" for i in 1:25],
-					 ["end" for i in 1:25],
-					 ["begin" for i in 1:25],
-					 ["end" for i in 1:25]),
-)
+# ╔═╡ c14800f8-4c67-44b0-8b0a-3b3bf1e4bc47
+begin
+	df_pc_time = DataFrame(
+	    time = vcat(time_range, time_range, time_range, time_range,time_range,time_range,time_range,time_range),
+	    signal = vcat(input[1, :], 
+					  input[2, :],
+					  input[3, :],
+					  pc_rates[1,:],
+					  pc_rates[2,:],
+					  pc_rates[3,:],
+					  pc_rates[4,:],
+					  pc_rates[5,:]),
+		type_of_signal = vcat(["attribute 1" for i in 1:50],
+							  ["attribute 2" for i in 1:50],
+							  ["attribute 3" for i in 1:50],
+							  ["PC 1" for i in 1:50],
+							  ["PC 2" for i in 1:50],
+							  ["PC 3" for i in 1:50],
+							  ["PC 4" for i in 1:50],
+							  ["PC 5" for i in 1:50]),
+	)
+	plt_pc_time = data(df_pc_time) * mapping(:time, :signal; color=:type_of_signal) * visual(Lines)
+	draw(plt_pc_time)
+end
 
 # ╔═╡ bed99a57-ed0f-455b-9df1-610a3b3c8934
 begin
 	axis = (type = Axis3, width = 300, height = 300)
-	layers = visual(Scatter) + visual(Lines)
-	plt_rates = data(df_rates) * mapping(:pc_1, :pc_2) * layers * mapping(:pc_3, color = :type_of_signal, marker = :begin_end)
-	draw(plt_rates; axis=axis)
+	layers = visual(Lines)
+	plt_rates = data(df_rates) * mapping(:pc_1, :pc_2) * layers * mapping(:pc_3)
+	f1 = Figure()
+	draw!(f1, plt_rates; axis=axis)
+	f1
 end
 
-# ╔═╡ 6218fe82-59ec-44a9-8c06-59199f9936d2
+# ╔═╡ c9c845db-7d0e-401b-9e84-46503b9c732d
 begin
-	plt_rates_pc_1_2 = data(df_rates) * mapping(:pc_1, :pc_2, color = :type_of_signal, marker = :begin_end) * layers
-	draw(plt_rates_pc_1_2)
+	plt_pc_1_2 = data(df_rates) * mapping(:pc_1, :pc_2) * layers
+	f2 = Figure()
+	draw!(f2, plt_pc_1_2)
+	f2
+end
+
+# ╔═╡ c8a90012-1cd5-4846-a04e-a40c3f63d359
+begin
+	plt_pc_1_3 = data(df_rates) * mapping(:pc_1, :pc_3) * layers
+	f3 = Figure()
+	draw!(f3, plt_pc_1_3)
+	f3
+end
+
+# ╔═╡ 5e6cf0cd-4581-4a5e-aa54-08ef9e76d672
+begin
+	plt_pc_2_3 = data(df_rates) * mapping(:pc_2, :pc_3) * layers
+	f4 = Figure()
+	draw!(f4, plt_pc_2_3)
+	f4
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2264,34 +2338,32 @@ version = "3.5.0+0"
 # ╟─1b45cd8a-cfe7-11ed-24dc-a1c5dfe6e994
 # ╟─486c7200-d918-47ee-8a65-8d698bc61e09
 # ╟─1f31c77a-5554-4f51-b4c2-7c01f963b043
-# ╠═2c7f6b4f-c8bd-4a72-9a7c-728c0dbb1f63
+# ╟─2c7f6b4f-c8bd-4a72-9a7c-728c0dbb1f63
 # ╟─842ee6bc-9a65-48b3-afcb-ea2d13bc11cd
-# ╠═402e5461-5c4b-40bf-84ab-95be1fc219e9
-# ╠═75b82178-a950-45e5-b322-9119e8be09ed
-# ╠═9f5b1712-b28f-49be-a2a4-279f2b134d3f
+# ╟─402e5461-5c4b-40bf-84ab-95be1fc219e9
 # ╟─9fda22ce-e481-45b2-b9ae-84639a88a655
-# ╠═30e0e0f1-b4da-4eff-b4c4-913ba546d831
-# ╠═11b5ac93-58f1-4822-a96b-07fd0387147b
-# ╠═440b365c-858b-4f42-8b55-3b2a40097734
-# ╠═a8ea6848-a944-43b6-9939-18c2912f5d5b
+# ╟─30e0e0f1-b4da-4eff-b4c4-913ba546d831
+# ╟─440b365c-858b-4f42-8b55-3b2a40097734
+# ╟─0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
 # ╟─7563f413-ea07-4e41-8381-a22a45b8410b
-# ╠═96f315e3-428e-4bf3-a206-58573ce6204e
-# ╠═09968292-f475-4916-9dca-38274c32230e
-# ╠═cd4b79b2-8c84-4ee7-909e-d670749679a1
+# ╟─96f315e3-428e-4bf3-a206-58573ce6204e
+# ╟─a1d043d0-5bb1-4147-9911-5c711bf0da6f
+# ╠═87ad1e54-95c1-4774-883f-f80cee036b28
 # ╟─37ccbba2-861b-46dd-a25d-1068ad7e124a
 # ╟─14cdf7d2-e840-4b90-afe7-c24e21f38357
-# ╠═b0316255-000c-448f-a25c-ffa3a23c405e
+# ╟─b0316255-000c-448f-a25c-ffa3a23c405e
 # ╟─95b45cf6-2ecc-4161-afc9-dca24fa29c9f
-# ╠═acd468ca-3d9e-44fb-afcc-4ce6bbb978f2
+# ╟─acd468ca-3d9e-44fb-afcc-4ce6bbb978f2
+# ╟─61615ec6-7032-4f77-b2db-8b22b8c2c0d2
+# ╠═6077af0b-1833-46f4-8c68-2a5b7a23c69d
 # ╟─f2977d62-4b44-44de-9cd1-a7ecfadc0423
-# ╟─ac2f1475-eb3c-4196-9f5f-e6820f5bcbc2
-# ╠═fea68b73-d74a-4759-997c-ef138a71a3b4
-# ╠═7b8f283b-4a39-443b-b7cc-300301db3c46
-# ╠═bc074c58-827e-4f1c-a35b-74e9aa789e0b
-# ╠═3c3f4b43-e42f-4416-aed5-e987c002ddf7
-# ╠═a6b35df4-baae-4b23-8032-4bd04277213c
-# ╟─f628a6ff-d61c-428b-9a06-b5e998bfdb5c
+# ╟─89518552-0c8c-4fad-8cf1-2a79f70e3d34
+# ╟─7b8f283b-4a39-443b-b7cc-300301db3c46
+# ╠═22e0610d-b673-4a25-8a99-341235eed758
+# ╟─c14800f8-4c67-44b0-8b0a-3b3bf1e4bc47
 # ╟─bed99a57-ed0f-455b-9df1-610a3b3c8934
-# ╟─6218fe82-59ec-44a9-8c06-59199f9936d2
+# ╟─c9c845db-7d0e-401b-9e84-46503b9c732d
+# ╟─c8a90012-1cd5-4846-a04e-a40c3f63d359
+# ╟─5e6cf0cd-4581-4a5e-aa54-08ef9e76d672
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
