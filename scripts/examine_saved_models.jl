@@ -58,6 +58,9 @@ begin
 	draw(plt_accuracies)
 end
 
+# ╔═╡ eb9babfb-1390-43c1-929e-f8d726aa649e
+accuracies[:,end]
+
 # ╔═╡ 7563f413-ea07-4e41-8381-a22a45b8410b
 md"## Load data"
 
@@ -98,7 +101,7 @@ test_accuracy(model, ps, st, testing_data[1], testing_data[2])
 md"## What is the testing SET number?"
 
 # ╔═╡ 6077af0b-1833-46f4-8c68-2a5b7a23c69d
-SET_num = 27
+SET_num = 4
 
 # ╔═╡ f2977d62-4b44-44de-9cd1-a7ecfadc0423
 md"## Visualize low-dimensional dynamics"
@@ -2342,11 +2345,12 @@ version = "3.5.0+0"
 # ╟─842ee6bc-9a65-48b3-afcb-ea2d13bc11cd
 # ╟─402e5461-5c4b-40bf-84ab-95be1fc219e9
 # ╟─9fda22ce-e481-45b2-b9ae-84639a88a655
-# ╟─30e0e0f1-b4da-4eff-b4c4-913ba546d831
-# ╟─440b365c-858b-4f42-8b55-3b2a40097734
-# ╟─0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
+# ╠═30e0e0f1-b4da-4eff-b4c4-913ba546d831
+# ╠═440b365c-858b-4f42-8b55-3b2a40097734
+# ╠═0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
+# ╠═eb9babfb-1390-43c1-929e-f8d726aa649e
 # ╟─7563f413-ea07-4e41-8381-a22a45b8410b
-# ╟─96f315e3-428e-4bf3-a206-58573ce6204e
+# ╠═96f315e3-428e-4bf3-a206-58573ce6204e
 # ╟─a1d043d0-5bb1-4147-9911-5c711bf0da6f
 # ╠═87ad1e54-95c1-4774-883f-f80cee036b28
 # ╟─37ccbba2-861b-46dd-a25d-1068ad7e124a
@@ -2358,10 +2362,10 @@ version = "3.5.0+0"
 # ╠═6077af0b-1833-46f4-8c68-2a5b7a23c69d
 # ╟─f2977d62-4b44-44de-9cd1-a7ecfadc0423
 # ╟─89518552-0c8c-4fad-8cf1-2a79f70e3d34
-# ╟─7b8f283b-4a39-443b-b7cc-300301db3c46
+# ╠═7b8f283b-4a39-443b-b7cc-300301db3c46
 # ╠═22e0610d-b673-4a25-8a99-341235eed758
 # ╟─c14800f8-4c67-44b0-8b0a-3b3bf1e4bc47
-# ╟─bed99a57-ed0f-455b-9df1-610a3b3c8934
+# ╠═bed99a57-ed0f-455b-9df1-610a3b3c8934
 # ╟─c9c845db-7d0e-401b-9e84-46503b9c732d
 # ╟─c8a90012-1cd5-4846-a04e-a40c3f63d359
 # ╟─5e6cf0cd-4581-4a5e-aa54-08ef9e76d672
