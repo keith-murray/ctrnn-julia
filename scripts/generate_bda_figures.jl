@@ -235,19 +235,19 @@ begin
 
 	rates_accepted_pc3 = DataFrame()
 	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc3[!, "PC 2"] = -1 .* pc_rates_accepted[2,:]
+	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
 	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
 	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
 
 	rates_accepted_pc4 = DataFrame()
 	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc4[!, "PC 2"] = -1 .* pc_rates_accepted[2,:]
+	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
 	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
 	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
 
 	rates_accepted_pc5 = DataFrame()
 	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc5[!, "PC 2"] = -1 .* pc_rates_accepted[2,:]
+	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
 	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
 	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
 
@@ -279,19 +279,19 @@ begin
 
 	rates_reject_pc3 = DataFrame()
 	rates_reject_pc3[!, "PC 1"] = pc_rates_reject[1,:]
-	rates_reject_pc3[!, "PC 2"] = -1 .* pc_rates_accepted[2,:]
+	rates_reject_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
 	rates_reject_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
 	rates_reject_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_reject[1,:])]
 
 	rates_reject_pc4 = DataFrame()
 	rates_reject_pc4[!, "PC 1"] = pc_rates_reject[1,:]
-	rates_reject_pc4[!, "PC 2"] = -1 .* pc_rates_reject[2,:]
+	rates_reject_pc4[!, "PC 2"] = pc_rates_reject[2,:]
 	rates_reject_pc4[!, "PC 3,4,5"] = pc_rates_reject[4,:]
 	rates_reject_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_reject[1,:])]
 
 	rates_reject_pc5 = DataFrame()
 	rates_reject_pc5[!, "PC 1"] = pc_rates_reject[1,:]
-	rates_reject_pc5[!, "PC 2"] = -1 .* pc_rates_reject[2,:]
+	rates_reject_pc5[!, "PC 2"] = pc_rates_reject[2,:]
 	rates_reject_pc5[!, "PC 3,4,5"] = pc_rates_reject[5,:]
 	rates_reject_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_reject[1,:])]
 
@@ -2546,7 +2546,7 @@ version = "3.5.0+0"
 # ╟─10488006-8c27-44d5-a597-aa652f34c5d2
 # ╟─9512bf14-ffe8-44bd-8642-fada6053032f
 # ╟─ce1396be-de81-4402-b8a1-ef59056aa89b
-# ╠═d101c7c2-84a7-4f02-815e-cd16925fbf73
+# ╟─d101c7c2-84a7-4f02-815e-cd16925fbf73
 # ╠═f41d4286-7807-4077-ab17-1e898de41633
 # ╟─244c5a30-05f0-4539-947a-f573261396f1
 # ╟─3d09d055-304e-44c2-9a6f-97d4ba33006d
