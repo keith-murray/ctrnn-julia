@@ -229,46 +229,16 @@ md"## Visualize individual examples"
 # ╔═╡ a1e2f6cc-0251-43b7-b191-3323f71007d3
 md"#### Accepted example"
 
-# ╔═╡ 3b784583-5555-4750-aa47-eeee7adf06c0
-begin
-	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
-
-	rates_accepted_pc3 = DataFrame()
-	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
-	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
-
-	rates_accepted_pc4 = DataFrame()
-	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
-	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
-
-	rates_accepted_pc5 = DataFrame()
-	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
-	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
-
-	axis = (type = Axis3, width = 300, height = 300)
-	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
-	plt_pc_accepted = plt_data_pc_accepted * mapping(:"PC 1", :"PC 2"; color=:"Data") * mapping(:"PC 3,4,5")
-	colors_pc = [
-		"PC 3" => colorant"#DA3A32",
-		"PC 4" => colorant"#662BF0",
-		"PC 5" => colorant"#5CD629"
-	]
-	fg_pc_accepted = draw(
-		plt_pc_accepted; 
-		axis=axis,
-		palettes=(color=colors_pc,)
-	)
-end
-
 # ╔═╡ e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
 save(
 	"../results/BDA_figures/pca_accepted_summary.png", 
+	fg_pc_accepted, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 03b00181-a2f7-42d8-91c0-3b6318a42664
+save(
+	"../results/BDA_figures/pca_accepted_2D_summary.png", 
 	fg_pc_accepted, 
 	px_per_unit = 3
 )
@@ -399,6 +369,84 @@ save(
 
 # ╔═╡ 491243b4-aea5-4e6c-a3f8-4d185658d8e8
 md"Green colors do not perturb the cycle. Purple colors add 2/3 pi radians to the cycle. Red colors subract 2/3 pi radians to the cycle."
+
+# ╔═╡ 48157dd9-99d0-4833-8d21-a4d277ffe063
+begin
+	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
+
+	rates_accepted_pc3 = DataFrame()
+	rates_accepted_pc3[!, "time (s)"] = time_range
+	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
+	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc4 = DataFrame()
+	rates_accepted_pc4[!, "time (s)"] = time_range
+	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
+	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc5 = DataFrame()
+	rates_accepted_pc5[!, "time (s)"] = time_range
+	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
+	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
+
+	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
+	plt_pc_accepted = plt_data_pc_accepted * mapping(:"time (s)", :"PC 3,4,5"; color=:"Data")
+	colors_pc = [
+		"PC 3" => colorant"#DA3A32",
+		"PC 4" => colorant"#662BF0",
+		"PC 5" => colorant"#5CD629"
+	]
+	fg_pc_accepted = draw(
+		plt_pc_accepted; 
+		palettes=(color=colors_pc,)
+	)
+end
+
+# ╔═╡ 3b784583-5555-4750-aa47-eeee7adf06c0
+# ╠═╡ disabled = true
+#=╠═╡
+begin
+	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
+
+	rates_accepted_pc3 = DataFrame()
+	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
+	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc4 = DataFrame()
+	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
+	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc5 = DataFrame()
+	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
+	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
+
+	axis = (type = Axis3, width = 300, height = 300)
+	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
+	plt_pc_accepted = plt_data_pc_accepted * mapping(:"PC 1", :"PC 2"; color=:"Data") * mapping(:"PC 3,4,5")
+	colors_pc = [
+		"PC 3" => colorant"#DA3A32",
+		"PC 4" => colorant"#662BF0",
+		"PC 5" => colorant"#5CD629"
+	]
+	fg_pc_accepted = draw(
+		plt_pc_accepted; 
+		axis=axis,
+		palettes=(color=colors_pc,)
+	)
+end
+  ╠═╡ =#
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2556,8 +2604,10 @@ version = "3.5.0+0"
 # ╟─6981238a-461c-45e0-992e-ab7bfc5e5452
 # ╟─a9522038-d4cb-4c5f-ae04-6a6e9bc3a63f
 # ╟─a1e2f6cc-0251-43b7-b191-3323f71007d3
-# ╟─3b784583-5555-4750-aa47-eeee7adf06c0
+# ╠═3b784583-5555-4750-aa47-eeee7adf06c0
 # ╟─e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
+# ╠═48157dd9-99d0-4833-8d21-a4d277ffe063
+# ╠═03b00181-a2f7-42d8-91c0-3b6318a42664
 # ╟─0a156e28-302e-4d7e-80e4-d91ddcfc0ca9
 # ╟─c80933e9-0a97-42dd-8969-19c06bc2b074
 # ╟─53152ffc-4d3f-483b-b673-4b8309266a04
