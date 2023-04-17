@@ -46,8 +46,8 @@ function constructResults(loss, model, ps, st, training_data, testing_data, IC)
 end
 
 function printUpdates(epoch, epochs, ttime, current_results)
-    println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Training Loss: " * "$(round(current_results[1]; digits=4)) \t " * "Test Accuracy: $(round(current_results[2]; digits=4))")
-    println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Training Accuracy: " * "$(round(current_results[3] * 100; digits=2))% \t " * "Test Accuracy: $(round(current_results[4] * 100; digits=2))%")
+    println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Train Loss: " * "$(round(current_results[1]; digits=4)) \t " * "Test Loss: $(round(current_results[2]; digits=4))")
+    println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Train Accuracy: " * "$(round(current_results[3] * 100; digits=2))% \t " * "Test Accuracy: $(round(current_results[4] * 100; digits=2))%")
 end
 
 function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, training_data, testing_data, L2_mag::Float32, AR_mag::Float32, lr::Float32)	
