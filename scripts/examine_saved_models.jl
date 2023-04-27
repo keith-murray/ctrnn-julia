@@ -42,10 +42,10 @@ end
 
 # ╔═╡ 440b365c-858b-4f42-8b55-3b2a40097734
 begin
-	ps, accuracies = loadModel("../data/models/model_31.jls")
+	ps, accuracies = loadModel("../data/models/model_3.jls")
 	rng = Random.default_rng()
     Random.seed!(rng, 0)
-	model, ps_no, st = create_model(rng, 1.0f0, 0.75f0, 1.5f0, 0.01f0, 0.00f0, 0.00f0)
+	model, ps_no, st = create_model(rng, 50, 1.0f0, 0.75f0, 1.5f0, 0.01f0, 0.00f0, 0.00f0)
 end
 
 # ╔═╡ 0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
