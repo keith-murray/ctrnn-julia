@@ -38,8 +38,8 @@ end
 md"The function below creates the input vectors for the NeuralODE."
 
 # ╔═╡ a0f22d01-220d-48ae-9b1e-7f789d062079
-function constructInputVecs(rng::AbstractRNG)
-	return vcat(Lux.zeros32(rng, 1, 100), Lux.randn32(rng, 3, 100))
+function constructInputVecs(rng::AbstractRNG, neurons::Int64)
+	return vcat(Lux.zeros32(rng, 1, neurons), Lux.randn32(rng, 3, neurons))
 end
 
 # ╔═╡ 2f9b1355-1e07-4ccf-b3ab-857cd9ed5cb3
@@ -152,9 +152,16 @@ end
 begin
     rng = Random.default_rng()
     Random.seed!(rng, 0)
-	vecs = constructInputVecs(rng)
-	generateTrainingDataset(rng, "../data/data_540.jls", vecs)
-	generateTestingDataset(rng, "../data/data_27.jls", vecs)
+	vecs_100 = constructInputVecs(rng, 100)
+	generateTrainingDataset(rng, "../data/data_100_540.jls", vecs_100)
+	generateTestingDataset(rng, "../data/data_100_27.jls", vecs_100)
+end
+
+# ╔═╡ eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
+begin
+	vecs_50 = constructInputVecs(rng, 50)
+	generateTrainingDataset(rng, "../data/data_50_540.jls", vecs_50)
+	generateTestingDataset(rng, "../data/data_50_27.jls", vecs_50)
 end
 
 # ╔═╡ b2b1890d-338e-429a-9f10-71b33e9c68cd
@@ -269,9 +276,9 @@ version = "4.1.2"
 
 [[deps.CUDA_Driver_jll]]
 deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
-git-tree-sha1 = "10ca2b63b496edc09258b3de5d1aa64094b18b1d"
+git-tree-sha1 = "498f45593f6ddc0adff64a9310bb6710e851781b"
 uuid = "4ee394cb-3365-5eb0-8335-949819d2adfc"
-version = "0.5.0+0"
+version = "0.5.0+1"
 
 [[deps.CUDA_Runtime_Discovery]]
 deps = ["Libdl"]
@@ -281,9 +288,9 @@ version = "0.2.0"
 
 [[deps.CUDA_Runtime_jll]]
 deps = ["Artifacts", "CUDA_Driver_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "802b1f2220fd43251d343219adf478e6b7992bd4"
+git-tree-sha1 = "81eed046f28a0cdd0dc1f61d00a49061b7cc9433"
 uuid = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
-version = "0.5.0+0"
+version = "0.5.0+2"
 
 [[deps.CUDNN_jll]]
 deps = ["Artifacts", "CUDA_Runtime_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
@@ -904,6 +911,7 @@ version = "17.4.0+0"
 # ╟─b9a1ddc9-86e0-4e5b-8e6f-b623a3f1714e
 # ╠═aa80beed-a235-4074-ba84-ba4562075481
 # ╠═ad118a60-6794-4230-8cd0-6cd3d0b52bf3
+# ╠═eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
 # ╟─b2b1890d-338e-429a-9f10-71b33e9c68cd
 # ╠═02c6940e-0ac0-4942-8fe5-1dd836e5c594
 # ╠═a4b73010-f353-4437-aa2a-0ef1e7f50464
