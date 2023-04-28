@@ -46,8 +46,8 @@ end
 md"The function below creates the expected output for the NeuralODE to train off of."
 
 # ╔═╡ c7caa4fe-4ff0-43d7-8029-97679f039fff
-function constructOutput(rng::AbstractRNG, y_expected::Array)
-	out_desired = Lux.zeros32(rng, 1,50,length(y_expected))
+function constructOutput(rng::AbstractRNG, y_expected::Array, time_len)
+	out_desired = Lux.zeros32(rng, 1,time_len,length(y_expected))
 	subarr_out = @view out_desired[1, 46:end, :]
 	subarr_out .= reshape(y_expected, 1, :)
 	return out_desired
@@ -86,7 +86,7 @@ end
 md"The function below is going to generate the entire training dataset."
 
 # ╔═╡ 36ca73ce-afde-460a-bc49-2a7386992e9a
-function generateTrainingDataset(rng::AbstractRNG, output_file, vecs)
+function generateTrainingDataset(rng::AbstractRNG, output_file, vecs, time_len)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
     y_expected = Lux.zeros32(rng, 540)
@@ -113,7 +113,7 @@ function generateTrainingDataset(rng::AbstractRNG, output_file, vecs)
     # Serialize the outputs to a file
     open(output_file, "w") do f
         serialize(f, input_funcs)
-        serialize(f, constructOutput(rng, y_expected))
+        serialize(f, constructOutput(rng, y_expected, time_len))
     end
 end
 
@@ -121,7 +121,7 @@ end
 md"The function below is going to generate the entire testing dataset."
 
 # ╔═╡ aa80beed-a235-4074-ba84-ba4562075481
-function generateTestingDataset(rng::AbstractRNG, output_file, vecs)
+function generateTestingDataset(rng::AbstractRNG, output_file, vecs, time_len)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
     y_expected = Lux.zeros32(rng, 27)
@@ -144,7 +144,7 @@ function generateTestingDataset(rng::AbstractRNG, output_file, vecs)
     # Serialize the outputs to a file
     open(output_file, "w") do f
         serialize(f, input_funcs)
-        serialize(f, constructOutput(rng, y_expected))
+        serialize(f, constructOutput(rng, y_expected, time_len))
     end
 end
 
@@ -153,15 +153,21 @@ begin
     rng = Random.default_rng()
     Random.seed!(rng, 0)
 	vecs_100 = constructInputVecs(rng, 100)
-	generateTrainingDataset(rng, "../data/data_100_540.jls", vecs_100)
-	generateTestingDataset(rng, "../data/data_100_27.jls", vecs_100)
+	generateTrainingDataset(rng, "../data/data_100_540.jls", vecs_100, 50)
+	generateTestingDataset(rng, "../data/data_100_27.jls", vecs_100, 50)
 end
 
 # ╔═╡ eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
 begin
 	vecs_50 = constructInputVecs(rng, 50)
-	generateTrainingDataset(rng, "../data/data_50_540.jls", vecs_50)
-	generateTestingDataset(rng, "../data/data_50_27.jls", vecs_50)
+	generateTrainingDataset(rng, "../data/data_50_540.jls", vecs_50, 50)
+	generateTestingDataset(rng, "../data/data_50_27.jls", vecs_50, 50)
+end
+
+# ╔═╡ 7cde92f9-8681-48e6-97e8-f83ea4333d64
+begin
+	generateTrainingDataset(rng, "../data/data_100_540_long.jls", vecs_100, 100)
+	generateTestingDataset(rng, "../data/data_100_27_long.jls", vecs_100, 100)
 end
 
 # ╔═╡ b2b1890d-338e-429a-9f10-71b33e9c68cd
@@ -192,7 +198,7 @@ function loadData(output_file::String)
 end
 
 # ╔═╡ ce6e9c35-1ffe-4b25-8b01-48d1ece41045
-interpolate_array, ouput = loadData("../data/data_27.jls")
+interpolate_array, ouput = loadData("../data/data_100_27_long.jls")
 
 # ╔═╡ 5f7bec94-9367-43ce-9919-7366db3b2c81
 typeof(interpolate_array)
@@ -912,6 +918,7 @@ version = "17.4.0+0"
 # ╠═aa80beed-a235-4074-ba84-ba4562075481
 # ╠═ad118a60-6794-4230-8cd0-6cd3d0b52bf3
 # ╠═eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
+# ╠═7cde92f9-8681-48e6-97e8-f83ea4333d64
 # ╟─b2b1890d-338e-429a-9f10-71b33e9c68cd
 # ╠═02c6940e-0ac0-4942-8fe5-1dd836e5c594
 # ╠═a4b73010-f353-4437-aa2a-0ef1e7f50464

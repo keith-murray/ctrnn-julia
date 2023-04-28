@@ -12,7 +12,7 @@ export train
 include("training_funcs.jl")
 
 export main
-function main(training::String, testing::String, seed::Int64, batch::Int64, epochs::Int64, neurons::Int64, gain_init::Float32, gain_recur::Float32, gain_out::Float32, tau::Float32, noise_IC::Float32, noise_recur::Float32, L2_mag::Float32, AR_mag::Float32, lr::Float32)
+function main(training::String, testing::String, seed::Int64, batch::Int64, epochs::Int64, neurons::Int64, gain_init::Float32, gain_recur::Float32, gain_out::Float32, tau::Float32, noise_IC::Float32, noise_recur::Float32, tspan::Tuple{Float32, Float32}, L2_mag::Float32, AR_mag::Float32, lr::Float32)
     training_input_funcs, training_output = loadData(training)
     testing_input_funcs, testing_output = loadData(testing)
 
@@ -23,7 +23,7 @@ function main(training::String, testing::String, seed::Int64, batch::Int64, epoc
     training_data = (training_input_funcs, training_output)
     testing_data = (ArrayAndFuncs(IC, testing_input_funcs), testing_output)
 
-    model, ps, st = create_model(rng, neurons, gain_init, gain_recur, gain_out, tau, noise_IC, noise_recur)
+    model, ps, st = create_model(rng, neurons, gain_init, gain_recur, gain_out, tau, noise_IC, noise_recur, tspan)
 
     ps_out, accuracies = train(rng, batch, epochs, model, ps, st, IC, training_data, testing_data, L2_mag, AR_mag, lr)
 

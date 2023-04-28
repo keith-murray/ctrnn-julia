@@ -1,6 +1,23 @@
 using Lux, OrdinaryDiffEq, LinearAlgebra, ComponentArrays, NNlib, SciMLSensitivity
 include("load_SET_data.jl")
 
+struct derivative{R, A <: Lux.AbstractExplicitLayer, B, C, D} <: Lux.AbstractExplicitContainerLayer{(:model,)}
+    randGen::R
+    model::A
+    st::B
+    neurons::C
+    func::D
+end
+
+function derivative(randGen, model::Lux.AbstractExplicitLayer, st, neurons, func)
+    return NeuralODE(randGen, model, st, neurons, func)
+end
+
+function (dudt::derivative)(u, p, t)
+    u_, st = dudt.model((u, dudt.func(t), Lux.randn32(dudt.randGen, dudt.neurons)), p, dudt.st)
+    return u_
+end
+
 struct NeuralODE{M <: Lux.AbstractExplicitLayer, Ne, R, N <: Float32, So, Se, T, K} <: Lux.AbstractExplicitContainerLayer{(:model,)}
     model::M
     neurons::Ne
@@ -17,20 +34,13 @@ function NeuralODE(model::Lux.AbstractExplicitLayer, neurons, randGen; noiseCons
 end
 
 function (n::NeuralODE)(x, ps, st)
-    function make_new_func(func)
-        function dudt(u, p, t)
-            u_, st = n.model((u, func(t), Lux.randn32(n.randGen, n.neurons)), p, st)
-            return u_
-        end
-        return dudt
-    end
     function prob_func(prob, i, repeat)
         remake(prob;
-                    f = ODEFunction{false}(make_new_func(x.funcs[i])),
+                    f = ODEFunction{false}(derivative(n.randGen, n.model, st, n.neurons, x.funcs[i])),
                     u0 = x.array + (n.noiseConstant .* Lux.randn32(n.randGen, n.neurons)))
     end
 
-    prob = ODEProblem{false}(ODEFunction{false}(make_new_func(x.funcs[1])), x.array, n.tspan, ps)
+    prob = ODEProblem{false}(ODEFunction{false}(derivative(n.randGen, n.model, st, n.neurons, x.funcs[1])), x.array, n.tspan, ps)
     ensemble_prob = EnsembleProblem(prob, prob_func = prob_func)
 
     return solve(ensemble_prob, n.solver, EnsembleThreads(), trajectories = length(x.funcs); sensealg=n.sensealg, n.kwargs...), st
@@ -45,7 +55,7 @@ function ensemsol_to_array(x::EnsembleSolution)
 	return Array(x)
 end
 
-function create_model(rng::AbstractRNG, neurons::Int64, gain_init::Float32, gain_recur::Float32, gain_out::Float32, tau::Float32, noise_IC::Float32, noise_recur::Float32)
+function create_model(rng::AbstractRNG, neurons::Int64, gain_init::Float32, gain_recur::Float32, gain_out::Float32, tau::Float32, noise_IC::Float32, noise_recur::Float32, tspan::Tuple{Float32, Float32})
 	input_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=gain_init)
 	recurrent_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=gain_recur)
 	output_init(rng, dims...) = Lux.glorot_normal(rng, dims...; gain=gain_out)
@@ -61,7 +71,7 @@ function create_model(rng::AbstractRNG, neurons::Int64, gain_init::Float32, gain
                                 Dense(neurons,neurons; init_weight=input_init),
                                 WrappedFunction(internal_noise)),
                                 invtau_func), 
-                    neurons, rng, noiseConstant=noise_IC, dt=0.01f0, save_start=false, adaptive=false
+                    neurons, rng, noiseConstant=noise_IC, tspan=tspan, dt=0.01f0, save_start=false, adaptive=false
                     ), 
                 ensemsol_to_array, 
                 act_func,
