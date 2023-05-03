@@ -170,6 +170,19 @@ begin
 	generateTestingDataset(rng, "../data/data_100_27_long.jls", vecs_100, 100)
 end
 
+# ╔═╡ 1911b287-9edd-4e3c-aefa-92ca4df64f96
+begin
+		vecs_256 = constructInputVecs(rng, 256)
+		generateTrainingDataset(rng, "../data/data_256_540.jls", vecs_256, 50)
+		generateTestingDataset(rng, "../data/data_256_27.jls", vecs_256, 50)
+end
+
+# ╔═╡ 3a2ceccf-1d3e-424d-9c87-d89a44c79a48
+begin
+			generateTrainingDataset(rng, "../data/data_256_540_long.jls", vecs_256, 100)
+			generateTestingDataset(rng, "../data/data_256_27_long.jls", vecs_256, 100)
+end
+
 # ╔═╡ b2b1890d-338e-429a-9f10-71b33e9c68cd
 md"## Test serialization"
 
@@ -919,6 +932,8 @@ version = "17.4.0+0"
 # ╠═ad118a60-6794-4230-8cd0-6cd3d0b52bf3
 # ╠═eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
 # ╠═7cde92f9-8681-48e6-97e8-f83ea4333d64
+# ╠═1911b287-9edd-4e3c-aefa-92ca4df64f96
+# ╠═3a2ceccf-1d3e-424d-9c87-d89a44c79a48
 # ╟─b2b1890d-338e-429a-9f10-71b33e9c68cd
 # ╠═02c6940e-0ac0-4942-8fe5-1dd836e5c594
 # ╠═a4b73010-f353-4437-aa2a-0ef1e7f50464

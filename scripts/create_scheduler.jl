@@ -87,12 +87,12 @@ begin
 			0.0001f0,
 			0.0001f0,
 			0.0001f0]
-	run5 = ["./data/data_100_540_long.jls", 
-			"./data/data_100_27_long.jls",
+	run5 = ["./data/data_256_540_long.jls", 
+			"./data/data_256_27_long.jls",
 			0,
 			108,
-			3000,
-			100,
+			125,
+			256,
 			1.0f0,
 			0.75f0,
 			1.5f0,
@@ -100,8 +100,8 @@ begin
 		    0.50f0,
 			0.10f0,
 			(0.00f0, 1.00f0),
-			0.0001f0,
-			0.0001f0,
+			0.00001f0,
+			0.00001f0,
 			0.0001f0]
 	run6 = ["./data/data_50_540.jls", 
 			"./data/data_50_27.jls",
@@ -119,11 +119,60 @@ begin
 			0.0001f0,
 			0.0001f0,
 			0.0001f0]
-	rows = [run1, run2, run3, run4, run5, run6, ]
+	run7 = ["./data/data_50_540.jls", 
+			"./data/data_50_27.jls",
+			0,
+			108,
+			2500,
+			50,
+			1.0f0,
+			0.75f0,
+			1.5f0,
+			0.01f0,
+		    0.05f0,
+			0.05f0,
+			(0.00f0, 0.50f0),
+			0.0001f0,
+			0.0001f0,
+			0.0001f0]
+	run8 = ["./data/data_256_540.jls", 
+			"./data/data_256_27.jls",
+			0,
+			108,
+			250,
+			256,
+			1.0f0,
+			0.75f0,
+			1.5f0,
+			0.01f0,
+		    0.50f0,
+			0.10f0,
+			(0.00f0, 0.50f0),
+			0.0001f0,
+			0.0001f0,
+			0.0001f0]
+	rows = [run1, run2, run3, run4, run5, run6, run7, run8, ]
 end
 
 # ╔═╡ e1418d9c-1150-4851-9e72-f76461fed8fe
-column_names = ["training", "testing", "seed", "batch", "epochs", "neurons", "gain_init", "gain_recur", "gain_out", "tau", "noise_IC", "noise_recur", "tspan", "L2_mag", "AR_mag","lr"]
+column_names = [
+	"training", 
+	"testing", 
+	"seed", 
+	"batch", 
+	"epochs", 
+	"neurons", 
+	"gain_init", 
+	"gain_recur", 
+	"gain_out", 
+	"tau", 
+	"noise_IC", 
+	"noise_recur", 
+	"tspan", 
+	"L2_mag", 
+	"AR_mag", 
+	"lr"
+]
 
 # ╔═╡ ea6f558c-0209-4cb0-aaa7-c887aa5bd67b
 function transpose_list_of_lists(list_of_lists::Vector{Vector{Any}})
