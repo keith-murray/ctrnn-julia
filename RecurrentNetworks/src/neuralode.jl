@@ -10,7 +10,7 @@ struct derivative{R, A <: Lux.AbstractExplicitLayer, B, C, D} <: Lux.AbstractExp
 end
 
 function derivative(randGen, model::Lux.AbstractExplicitLayer, st, neurons, func)
-    return NeuralODE(randGen, model, st, neurons, func)
+    return derivative(randGen, model, st, neurons, func)
 end
 
 function (dudt::derivative)(u, p, t)
