@@ -123,6 +123,15 @@ begin
 	md"some data"
 end
 
+# ╔═╡ a0dfcf84-5351-4e46-9366-aac27a721553
+begin
+	blank_interpolate = Interpolate([1,1], [0.25f0,], testing_input_funcs[1].vecs)
+	blank_data = ArrayAndFuncs(IC, [blank_interpolate, ])
+	(y_out_blank, r_out_blank), _ = model(blank_data, ps, st)
+	r_out_blank = r_out_blank[:, :, 1]
+	md"blank data"
+end
+
 # ╔═╡ d101c7c2-84a7-4f02-815e-cd16925fbf73
 begin
 	SET_accept_num = 4
@@ -139,12 +148,15 @@ begin
 						 SET_reject_matrix[2,:],
 						 SET_reject_matrix[3,:],
 						 y_out_test[1,:,SET_reject_num],
+						 y_out_blank[1,:,1],
 		),
 		row_iden = vcat(["Accepted stimulus" for i in 1:(4*length(time_range))],
-						["Rejected stimulus" for i in 1:(4*length(time_range))]),
+						["Rejected stimulus" for i in 1:(4*length(time_range))],
+						["No stimulus" for i in 1:length(time_range)],
+		),
 	)
 	
-	df_example_outputs[!, "time (s)"] = vcat(time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range)
+	df_example_outputs[!, "time (s)"] = vcat(time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range)
 	df_example_outputs[!, "Type of signal"] = vcat(
 		["Green" for i in 1:length(time_range)], 
 		["Purple" for i in 1:length(time_range)],
@@ -153,7 +165,8 @@ begin
 		["Green" for i in 1:length(time_range)], 
 		["Purple" for i in 1:length(time_range)],
 		["Red" for i in 1:length(time_range)],
-		["Output" for i in 1:length(time_range)]
+		["Output" for i in 1:length(time_range)],
+		["Output" for i in 1:length(time_range)],
 	)
 	
 	plt_SET_example = data(df_example_outputs) * mapping(:"time (s)", :Amplitude; color=:"Type of signal", row=:row_iden) * visual(Lines)
@@ -180,18 +193,18 @@ begin
 	    pc_rates_all[:,:,SET_num] = pc_rates_curr
 	end
 
-	avg_pc1_train = mean(pc_rates_all[:,:,:1:30], dims=(3,))[:,:,1]
-	accept_pc_1_2 = mean(pc_rates_all[:,46:50,1:270], dims=(2,))[:,1,:]
-	reject_pc_1_2 = mean(pc_rates_all[:,46:50,271:end], dims=(2,))[:,1,:]
+	blank_pc_1_2 = predict(M, r_out_blank)
+	accept_pc_1_2 = pc_rates_all[:,end,1:270]
+	reject_pc_1_2 = pc_rates_all[:,end,271:end]
 	md"more data"
 end
 
 # ╔═╡ 14431077-82aa-4e82-8e06-6689a722ce8a
 begin
 	df_avg_train = DataFrame()
-	df_avg_train[!, "PC 1"] = avg_pc1_train[1,:]
-	df_avg_train[!, "PC 2"] = avg_pc1_train[2,:]
-	df_avg_train[!, "Data"] = ["Average PCA trajectory" for i in 1:length(avg_pc1_train[2,:])]
+	df_avg_train[!, "PC 1"] = blank_pc_1_2[1,:]
+	df_avg_train[!, "PC 2"] = blank_pc_1_2[2,:]
+	df_avg_train[!, "Data"] = ["No stimulus PCA trajectory" for i in 1:length(blank_pc_1_2[2,:])]
 
 	df_train_accept = DataFrame()
 	df_train_accept[!, "PC 1"] = accept_pc_1_2[1,:]
@@ -205,7 +218,7 @@ begin
 	
 	plt_avg_test = data(df_avg_train) * visual(Lines) + data(df_train_accept) * visual(Scatter) + data(df_train_reject) * visual(Scatter)
 	colors_avg_test = [
-		"Average PCA trajectory" => colorant"#662BF0",
+		"No stimulus PCA trajectory" => colorant"#662BF0",
 		"Accepted stimulus" => colorant"#5CD629",
 		"Rejected stimulus" => colorant"#DA3A32"
 	]
@@ -229,6 +242,43 @@ md"## Visualize individual examples"
 # ╔═╡ a1e2f6cc-0251-43b7-b191-3323f71007d3
 md"#### Accepted example"
 
+# ╔═╡ 3b784583-5555-4750-aa47-eeee7adf06c0
+begin
+	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
+
+	rates_accepted_pc3 = DataFrame()
+	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
+	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc4 = DataFrame()
+	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
+	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc5 = DataFrame()
+	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
+	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
+
+	axis = (type = Axis3, width = 300, height = 300)
+	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
+	plt_pc_accepted = plt_data_pc_accepted * mapping(:"PC 1", :"PC 2"; color=:"Data") * mapping(:"PC 3,4,5")
+	colors_pc = [
+		"PC 3" => colorant"#DA3A32",
+		"PC 4" => colorant"#662BF0",
+		"PC 5" => colorant"#5CD629"
+	]
+	fg_pc_accepted = draw(
+		plt_pc_accepted; 
+		axis=axis,
+		palettes=(color=colors_pc,)
+	)
+end
+
 # ╔═╡ e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
 save(
 	"../results/BDA_figures/pca_accepted_summary.png", 
@@ -236,10 +286,48 @@ save(
 	px_per_unit = 3
 )
 
+# ╔═╡ 48157dd9-99d0-4833-8d21-a4d277ffe063
+begin
+	pc_rates_accepted_2d = predict(M, r_out_test[:,:,SET_accept_num])
+
+	rates_accepted_pc3_2d = DataFrame()
+	rates_accepted_pc3_2d[!, "time (s)"] = time_range
+	rates_accepted_pc3_2d[!, "PC 1"] = pc_rates_accepted_2d[1,:]
+	rates_accepted_pc3_2d[!, "PC 2"] = pc_rates_accepted_2d[2,:]
+	rates_accepted_pc3_2d[!, "PC 3,4,5"] = pc_rates_accepted_2d[3,:]
+	rates_accepted_pc3_2d[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted_2d[1,:])]
+
+	rates_accepted_pc4_2d = DataFrame()
+	rates_accepted_pc4_2d[!, "time (s)"] = time_range
+	rates_accepted_pc4_2d[!, "PC 1"] = pc_rates_accepted_2d[1,:]
+	rates_accepted_pc4_2d[!, "PC 2"] = pc_rates_accepted_2d[2,:]
+	rates_accepted_pc4_2d[!, "PC 3,4,5"] = pc_rates_accepted_2d[4,:]
+	rates_accepted_pc4_2d[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted_2d[1,:])]
+
+	rates_accepted_pc5_2d = DataFrame()
+	rates_accepted_pc5_2d[!, "time (s)"] = time_range
+	rates_accepted_pc5_2d[!, "PC 1"] = pc_rates_accepted_2d[1,:]
+	rates_accepted_pc5_2d[!, "PC 2"] = pc_rates_accepted_2d[2,:]
+	rates_accepted_pc5_2d[!, "PC 3,4,5"] = pc_rates_accepted_2d[5,:]
+	rates_accepted_pc5_2d[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted_2d[1,:])]
+
+	plt_data_pc_accepted_2d = data(rates_accepted_pc3_2d) * visual(Lines) + data(rates_accepted_pc4_2d) * visual(Lines) + data(rates_accepted_pc5_2d) * visual(Lines)
+	plt_pc_accepted_2d = plt_data_pc_accepted_2d * mapping(:"time (s)", :"PC 3,4,5"; color=:"Data")
+	colors_pc_2d = [
+		"PC 3" => colorant"#DA3A32",
+		"PC 4" => colorant"#662BF0",
+		"PC 5" => colorant"#5CD629"
+	]
+	fg_pc_accepted_2d = draw(
+		plt_pc_accepted_2d; 
+		palettes=(color=colors_pc_2d,)
+	)
+end
+
 # ╔═╡ 03b00181-a2f7-42d8-91c0-3b6318a42664
 save(
 	"../results/BDA_figures/pca_accepted_2D_summary.png", 
-	fg_pc_accepted, 
+	fg_pc_accepted_2d, 
 	px_per_unit = 3
 )
 
@@ -286,7 +374,7 @@ md"## Rotate data"
 
 # ╔═╡ 47d56bf2-d45e-40d7-8df9-f81a7a2c5890
 begin
-	theta = 45
+	theta = 60
 	theta_rad = deg2rad(theta)
 	R = [cos(theta_rad) -sin(theta_rad);
 	     sin(theta_rad) cos(theta_rad)]
@@ -295,9 +383,9 @@ end
 # ╔═╡ f8f265f3-d4a5-4768-94b5-8be192cdb2e3
 begin
 	df_avg_train_r = DataFrame()
-	df_avg_train_r[!, "Rotated PC 1"] = (R[1:1,:]*avg_pc1_train[1:2,:])[1,:]
-	df_avg_train_r[!, "Rotated PC 2"] = (R[2:2,:]*avg_pc1_train[1:2,:])[1,:]
-	df_avg_train_r[!, "Data"] = ["Average PCA trajectory" for i in 1:length(avg_pc1_train[2,:])]
+	df_avg_train_r[!, "Rotated PC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
+	df_avg_train_r[!, "Rotated PC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
+	df_avg_train_r[!, "Data"] = ["No stimulus PCA trajectory" for i in 1:length(blank_pc_1_2[2,:])]
 
 	df_train_accept_r = DataFrame()
 	df_train_accept_r[!, "Rotated PC 1"] = (R[1:1,:]*accept_pc_1_2[1:2,:])[1,:]
@@ -347,13 +435,20 @@ begin
 	rates_rejected_r[!, "Rotated PC 2"] = (R[2:2,:]*ppp_rates[1:2,:])[1,:]
 	rates_rejected_r[!, "Data"] = ["Purple, Purple, Purple" for i in 1:length(pc_rates_reject[1,:])]
 
+	rates_blank_r = DataFrame()
+	rates_blank_r[!, "time (s)"] = time_range
+	rates_blank_r[!, "Rotated PC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
+	rates_blank_r[!, "Rotated PC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
+	rates_blank_r[!, "Data"] = ["No stimulus" for i in 1:length(pc_rates_reject[1,:])]
+	
 	colors_rotated_ex = [
 		 "Purple, Purple, Purple" => colorant"#662BF0",
 		"Green, Green, Green" => colorant"#5CD629",
-		"Red, Red, Red" => colorant"#DA3A32"
+		"Red, Red, Red" => colorant"#DA3A32",
+		"No stimulus" => colorant"#F0B72B",
 	]
 	
-	plt_rotated_pc_examples = data(rates_accepted_r) * visual(Lines) + data(rates_rejected_r) * visual(Lines) + data(rates_accepted_ggg) * visual(Lines)
+	plt_rotated_pc_examples = data(rates_accepted_r) * visual(Lines) + data(rates_rejected_r) * visual(Lines) + data(rates_accepted_ggg) * visual(Lines) + data(rates_blank_r) * visual(Lines)
 	fg_rotated_pc_example = draw(
 		plt_rotated_pc_examples * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
 		palettes=(color=colors_rotated_ex,)
@@ -362,91 +457,205 @@ end
 
 # ╔═╡ 0bce1289-bd80-4375-87d0-435ea37487a6
 save(
-	"../results/BDA_figures/rotated_pc1.png", 
+	"../results/BDA_figures/rotated_pc1_accepted.png", 
 	fg_rotated_pc_example, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 181204e1-efe0-4d76-9f4d-8750cab63c9d
+begin
+	pgp_rates = predict(M, r_out_test[:,:,17])
+	rgr_rates = predict(M, r_out_test[:,:,23])
+	
+	rates_rgr = DataFrame()
+	rates_rgr[!, "time (s)"] = time_range
+	rates_rgr[!, "Rotated PC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr[!, "Rotated PC 2"] = (R[2:2,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr[!, "Data"] = ["Red, Green, Red" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_pgp = DataFrame()
+	rates_pgp[!, "time (s)"] = time_range
+	rates_pgp[!, "Rotated PC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp[!, "Rotated PC 2"] = (R[2:2,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp[!, "Data"] = ["Purple, Green, Purple" for i in 1:length(pc_rates_reject[1,:])]
+	
+	colors_rotated_ex_reject = [
+		 "Purple, Green, Purple" => colorant"#662BF0",
+		"Red, Green, Red" => colorant"#DA3A32",
+		"No stimulus" => colorant"#F0B72B",
+	]
+	
+	plt_rotated_pc_rej = data(rates_rgr) * visual(Lines) + data(rates_pgp) * visual(Lines) + data(rates_blank_r) * visual(Lines)
+	fg_rotated_pc_rej = draw(
+		plt_rotated_pc_rej * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_rotated_ex_reject,)
+	)
+end
+
+# ╔═╡ 3ff9f145-05c9-42d4-aa81-854520a14a6d
+save(
+	"../results/BDA_figures/rotated_pc1_rejected.png", 
+	fg_rotated_pc_rej, 
 	px_per_unit = 3
 )
 
 # ╔═╡ 491243b4-aea5-4e6c-a3f8-4d185658d8e8
 md"Green colors do not perturb the cycle. Purple colors add 2/3 pi radians to the cycle. Red colors subract 2/3 pi radians to the cycle."
 
-# ╔═╡ 48157dd9-99d0-4833-8d21-a4d277ffe063
+# ╔═╡ 8ae57eaf-a8eb-42eb-99ac-e775fb124992
+
+
+# ╔═╡ b723357c-dee5-4ceb-b9a7-f8940ec09e3b
+md"## Model cycles"
+
+# ╔═╡ fd16f5ac-1091-484c-bb1d-4ac46c38a85c
 begin
-	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
+	struct sine_wave
+		params::Array{Float64, 1}
+		phases::Array{Float64, 1}
+		time
+	end
+	
+	function (sn_fn::sine_wave)(itp::Interpolate)
+		time_series_result = zeros(length(sn_fn.time))
+		count = 1
+		skip = false
+		
+		phase_store = 0.0
+		for i in sn_fn.time
+			phase = itp(i) + 1
+			if phase != 1 & skip == true
+				phase = 1
+				skip = false
+			elseif phase != 1 & skip == false
+				skip = true
+			end
+			phase_store += sn_fn.phases[phase]
+			current_sine_value = sn_fn.params[1] * sin(sn_fn.params[2] * i + phase_store) + sn_fn.params[3]
+			time_series_result[count] = current_sine_value
+			count += 1
+		end
+		return time_series_result
+	end
+end
 
-	rates_accepted_pc3 = DataFrame()
-	rates_accepted_pc3[!, "time (s)"] = time_range
-	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
-	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
+# ╔═╡ 284f0c5f-ba19-4ee2-b139-9ebfdd8c130a
+begin
+	@. model_fit(t, p) = p[1] * sin(p[2]*t + p[3]) + p[4]
+	
+	sin_df = DataFrame()
+	sin_df[!, "time (s)"] = time_range
+	sin_df[!, "Rotated PC 1"] = model_fit(time_range, [7, 2*π/0.29, 0, -1.5])
+	sin_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
 
-	rates_accepted_pc4 = DataFrame()
-	rates_accepted_pc4[!, "time (s)"] = time_range
-	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
-	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
-
-	rates_accepted_pc5 = DataFrame()
-	rates_accepted_pc5[!, "time (s)"] = time_range
-	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
-	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
-
-	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
-	plt_pc_accepted = plt_data_pc_accepted * mapping(:"time (s)", :"PC 3,4,5"; color=:"Data")
-	colors_pc = [
-		"PC 3" => colorant"#DA3A32",
-		"PC 4" => colorant"#662BF0",
-		"PC 5" => colorant"#5CD629"
-	]
-	fg_pc_accepted = draw(
-		plt_pc_accepted; 
-		palettes=(color=colors_pc,)
+	colors_sines = ["No stimulus" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
+	
+	plt_sin = data(sin_df) * visual(Lines) + data(rates_blank_r) * visual(Lines)
+	fig_sin = draw(
+		plt_sin * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sines,)
 	)
 end
 
-# ╔═╡ 3b784583-5555-4750-aa47-eeee7adf06c0
-# ╠═╡ disabled = true
-#=╠═╡
+# ╔═╡ 0a9ca99d-ff90-4846-97ea-1fee939cdb3c
+save(
+	"../results/BDA_figures/rotated_pc1_sine_waves.png", 
+	fig_sin, 
+	px_per_unit = 3
+)
+
+# ╔═╡ c00e5da1-47e7-45af-b089-18ec4fd2c48f
+constructed_sine_wave = sine_wave(
+	[7, 2*π/0.29, -1.5], 
+	[0.0, 0.0, 2.0*π/3.0, -2.0*π/3.0],
+	0.01:0.01:0.50
+)
+
+# ╔═╡ af8f0866-3ea0-48c8-8afc-81f862e02e86
 begin
-	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
+	sin_construct_4_df = DataFrame()
+	sin_construct_4_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_construct_4_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[4])
+	sin_construct_4_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_4_df[!, "Row_iden"] = ["P G R" for i in 1:length(pc_rates_reject[1,:])]
 
-	rates_accepted_pc3 = DataFrame()
-	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
-	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
-
-	rates_accepted_pc4 = DataFrame()
-	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
-	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
-
-	rates_accepted_pc5 = DataFrame()
-	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
-	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
-	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
-	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
-
-	axis = (type = Axis3, width = 300, height = 300)
-	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
-	plt_pc_accepted = plt_data_pc_accepted * mapping(:"PC 1", :"PC 2"; color=:"Data") * mapping(:"PC 3,4,5")
-	colors_pc = [
-		"PC 3" => colorant"#DA3A32",
-		"PC 4" => colorant"#662BF0",
-		"PC 5" => colorant"#5CD629"
-	]
-	fg_pc_accepted = draw(
-		plt_pc_accepted; 
-		axis=axis,
-		palettes=(color=colors_pc,)
+	pgr_rates = predict(M, r_out_test[:,:,4])
+	
+	sin_pgr_df = DataFrame()
+	sin_pgr_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_pgr_df[!, "Rotated PC 1"] = (R[1:1,:]*pgr_rates[1:2,:])[1,:]
+	sin_pgr_df[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_reject[1,:])]
+	sin_pgr_df[!, "Row_iden"] = ["P G R" for i in 1:length(pc_rates_reject[1,:])]
+	
+	colors_sine_comparison = ["Recurrent network" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
+	
+	plt_sin_comp = data(sin_construct_4_df) * visual(Lines) + data(sin_pgr_df) * visual(Lines)
+	fig_sin_comp = draw(
+		plt_sin_comp * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sine_comparison,)
 	)
 end
-  ╠═╡ =#
+
+# ╔═╡ 804e26e2-c98e-46da-ae21-1485b9e16589
+begin
+	rates_pgp_comp = DataFrame()
+	rates_pgp_comp[!, "time (s)"] = time_range
+	rates_pgp_comp[!, "Rotated PC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp_comp[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_pgp_comp[!, "Row_iden"] = ["P G P" for i in 1:length(pc_rates_accepted[1,:])]
+
+	sin_construct_17_df = DataFrame()
+	sin_construct_17_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_construct_17_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[17])
+	sin_construct_17_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_17_df[!, "Row_iden"] = ["P G P" for i in 1:length(pc_rates_reject[1,:])]
+	
+	plt_sin_comp_rej_17 = data(rates_pgp_comp) * visual(Lines) + data(sin_construct_17_df) * visual(Lines)
+	fg_sin_comp_rej_17 = draw(
+		plt_sin_comp_rej_17 * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 6a1d7214-7e48-4412-a1b9-2fa02c091115
+begin
+	rates_rgr_comp = DataFrame()
+	rates_rgr_comp[!, "time (s)"] = time_range
+	rates_rgr_comp[!, "Rotated PC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr_comp[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_rgr_comp[!, "Row_iden"] = ["R G R" for i in 1:length(pc_rates_accepted[1,:])]
+
+	sin_construct_23_df = DataFrame()
+	sin_construct_23_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_construct_23_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[23])
+	sin_construct_23_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_23_df[!, "Row_iden"] = ["R G R" for i in 1:length(pc_rates_reject[1,:])]
+	
+	plt_sin_comp_rej_23 = data(rates_rgr_comp) * visual(Lines) + data(sin_construct_23_df) * visual(Lines)
+	fg_sin_comp_rej_23 = draw(
+		plt_sin_comp_rej_23 * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 12c461cd-d5f3-431b-a99d-a0fb75825f4d
+md"Summary figure"
+
+# ╔═╡ c9191753-436e-4d96-816b-3d1dae579152
+begin
+	plt_sin_comp_all = data(sin_construct_4_df) * visual(Lines) + data(sin_pgr_df) * visual(Lines) + data(rates_rgr_comp) * visual(Lines) + data(sin_construct_23_df) * visual(Lines) + data(rates_pgp_comp) * visual(Lines) + data(sin_construct_17_df) * visual(Lines)
+	fig_sin_comp_all = draw(
+		plt_sin_comp_all * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data", row=:"Row_iden"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 826e2d11-c66b-4654-9134-556f104a0347
+save(
+	"../results/BDA_figures/constructed_phase_angle_computation.png", 
+	fig_sin_comp_all, 
+	px_per_unit = 3
+)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -640,9 +849,9 @@ version = "0.1.2"
 
 [[deps.CUDA_Runtime_jll]]
 deps = ["Artifacts", "CUDA_Driver_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "d555cffbab63bb33401ab2cc6445d17dd38c305c"
+git-tree-sha1 = "ed00f777d2454c45f5f49634ed0a589da07ee0b0"
 uuid = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
-version = "0.2.4+0"
+version = "0.2.4+1"
 
 [[deps.CUDNN_jll]]
 deps = ["Artifacts", "CUDA_Runtime_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
@@ -2584,38 +2793,53 @@ version = "3.5.0+0"
 # ╠═c05c2be9-6954-4efd-905d-7625f1db51a9
 # ╠═da919f4f-ecc2-4afc-976e-35cdcb240b90
 # ╟─31483b23-3904-400c-9e4e-892a308b2847
-# ╟─0f1ab940-1701-4da7-ae07-ce0555225c5b
-# ╟─283f832b-5183-4869-8b19-1a76525fa0df
+# ╠═0f1ab940-1701-4da7-ae07-ce0555225c5b
+# ╠═283f832b-5183-4869-8b19-1a76525fa0df
 # ╟─534dd493-503b-4c91-8f9e-13b7f0031de4
-# ╠═cdf390eb-9780-46f6-8adf-5e595e4e1786
-# ╠═313a3d11-ca98-46e6-b59a-9df0ee9134c3
+# ╟─cdf390eb-9780-46f6-8adf-5e595e4e1786
+# ╟─313a3d11-ca98-46e6-b59a-9df0ee9134c3
 # ╟─cc2d4643-667b-4c11-a666-4dc99e4762f0
-# ╟─a401b611-bc1a-46e5-b426-3df277c53861
+# ╠═a401b611-bc1a-46e5-b426-3df277c53861
 # ╟─10488006-8c27-44d5-a597-aa652f34c5d2
 # ╟─9512bf14-ffe8-44bd-8642-fada6053032f
 # ╟─ce1396be-de81-4402-b8a1-ef59056aa89b
+# ╠═a0dfcf84-5351-4e46-9366-aac27a721553
 # ╟─d101c7c2-84a7-4f02-815e-cd16925fbf73
-# ╠═f41d4286-7807-4077-ab17-1e898de41633
+# ╟─f41d4286-7807-4077-ab17-1e898de41633
 # ╟─244c5a30-05f0-4539-947a-f573261396f1
 # ╟─3d09d055-304e-44c2-9a6f-97d4ba33006d
-# ╟─9dbbafa4-2a02-4731-8ccf-0a17af68feee
+# ╠═9dbbafa4-2a02-4731-8ccf-0a17af68feee
 # ╟─14431077-82aa-4e82-8e06-6689a722ce8a
 # ╟─8b8cacfd-ae08-4723-814d-0fadccdee144
 # ╟─6981238a-461c-45e0-992e-ab7bfc5e5452
 # ╟─a9522038-d4cb-4c5f-ae04-6a6e9bc3a63f
 # ╟─a1e2f6cc-0251-43b7-b191-3323f71007d3
-# ╠═3b784583-5555-4750-aa47-eeee7adf06c0
+# ╟─3b784583-5555-4750-aa47-eeee7adf06c0
 # ╟─e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
-# ╠═48157dd9-99d0-4833-8d21-a4d277ffe063
-# ╠═03b00181-a2f7-42d8-91c0-3b6318a42664
+# ╟─48157dd9-99d0-4833-8d21-a4d277ffe063
+# ╟─03b00181-a2f7-42d8-91c0-3b6318a42664
 # ╟─0a156e28-302e-4d7e-80e4-d91ddcfc0ca9
 # ╟─c80933e9-0a97-42dd-8969-19c06bc2b074
 # ╟─53152ffc-4d3f-483b-b673-4b8309266a04
-# ╟─47d56bf2-d45e-40d7-8df9-f81a7a2c5890
+# ╠═47d56bf2-d45e-40d7-8df9-f81a7a2c5890
 # ╟─f8f265f3-d4a5-4768-94b5-8be192cdb2e3
 # ╟─73e8636c-887d-44dc-85d3-7469bceea418
 # ╟─2b1bc0ca-12f8-49fe-bc90-5cd2954290ab
 # ╟─0bce1289-bd80-4375-87d0-435ea37487a6
+# ╟─181204e1-efe0-4d76-9f4d-8750cab63c9d
+# ╟─3ff9f145-05c9-42d4-aa81-854520a14a6d
 # ╟─491243b4-aea5-4e6c-a3f8-4d185658d8e8
+# ╠═8ae57eaf-a8eb-42eb-99ac-e775fb124992
+# ╟─b723357c-dee5-4ceb-b9a7-f8940ec09e3b
+# ╠═fd16f5ac-1091-484c-bb1d-4ac46c38a85c
+# ╟─284f0c5f-ba19-4ee2-b139-9ebfdd8c130a
+# ╟─0a9ca99d-ff90-4846-97ea-1fee939cdb3c
+# ╠═c00e5da1-47e7-45af-b089-18ec4fd2c48f
+# ╟─af8f0866-3ea0-48c8-8afc-81f862e02e86
+# ╟─804e26e2-c98e-46da-ae21-1485b9e16589
+# ╟─6a1d7214-7e48-4412-a1b9-2fa02c091115
+# ╟─12c461cd-d5f3-431b-a99d-a0fb75825f4d
+# ╟─c9191753-436e-4d96-816b-3d1dae579152
+# ╟─826e2d11-c66b-4654-9134-556f104a0347
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
