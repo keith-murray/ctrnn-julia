@@ -38,16 +38,16 @@ end
 md"The function below creates the input vectors for the NeuralODE."
 
 # ╔═╡ a0f22d01-220d-48ae-9b1e-7f789d062079
-function constructInputVecs(rng::AbstractRNG, neurons::Int64)
-	return vcat(Lux.zeros32(rng, 1, neurons), Lux.randn32(rng, 3, neurons))
+function constructInputVecs(rng::AbstractRNG)
+	return vcat(Lux.zeros32(rng, 1, 100), Lux.randn32(rng, 3, 100))
 end
 
 # ╔═╡ 2f9b1355-1e07-4ccf-b3ab-857cd9ed5cb3
 md"The function below creates the expected output for the NeuralODE to train off of."
 
 # ╔═╡ c7caa4fe-4ff0-43d7-8029-97679f039fff
-function constructOutput(rng::AbstractRNG, y_expected::Array, time_len)
-	out_desired = Lux.zeros32(rng, 1,time_len,length(y_expected))
+function constructOutput(rng::AbstractRNG, y_expected::Array)
+	out_desired = Lux.zeros32(rng, 1,50,length(y_expected))
 	subarr_out = @view out_desired[1, 46:end, :]
 	subarr_out .= reshape(y_expected, 1, :)
 	return out_desired
@@ -86,7 +86,7 @@ end
 md"The function below is going to generate the entire training dataset."
 
 # ╔═╡ 36ca73ce-afde-460a-bc49-2a7386992e9a
-function generateTrainingDataset(rng::AbstractRNG, output_file, vecs, time_len)
+function generateTrainingDataset(rng::AbstractRNG, output_file, vecs)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
     y_expected = Lux.zeros32(rng, 540)
@@ -113,7 +113,7 @@ function generateTrainingDataset(rng::AbstractRNG, output_file, vecs, time_len)
     # Serialize the outputs to a file
     open(output_file, "w") do f
         serialize(f, input_funcs)
-        serialize(f, constructOutput(rng, y_expected, time_len))
+        serialize(f, constructOutput(rng, y_expected))
     end
 end
 
@@ -121,7 +121,7 @@ end
 md"The function below is going to generate the entire testing dataset."
 
 # ╔═╡ aa80beed-a235-4074-ba84-ba4562075481
-function generateTestingDataset(rng::AbstractRNG, output_file, vecs, time_len)
+function generateTestingDataset(rng::AbstractRNG, output_file, vecs)
 	rejectedSETs, acceptedSETs = loadSETdata()
     input_funcs = []
     y_expected = Lux.zeros32(rng, 27)
@@ -144,7 +144,7 @@ function generateTestingDataset(rng::AbstractRNG, output_file, vecs, time_len)
     # Serialize the outputs to a file
     open(output_file, "w") do f
         serialize(f, input_funcs)
-        serialize(f, constructOutput(rng, y_expected, time_len))
+        serialize(f, constructOutput(rng, y_expected))
     end
 end
 
@@ -152,35 +152,9 @@ end
 begin
     rng = Random.default_rng()
     Random.seed!(rng, 0)
-	vecs_100 = constructInputVecs(rng, 100)
-	generateTrainingDataset(rng, "../data/data_100_540.jls", vecs_100, 50)
-	generateTestingDataset(rng, "../data/data_100_27.jls", vecs_100, 50)
-end
-
-# ╔═╡ eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
-begin
-	vecs_50 = constructInputVecs(rng, 50)
-	generateTrainingDataset(rng, "../data/data_50_540.jls", vecs_50, 50)
-	generateTestingDataset(rng, "../data/data_50_27.jls", vecs_50, 50)
-end
-
-# ╔═╡ 7cde92f9-8681-48e6-97e8-f83ea4333d64
-begin
-	generateTrainingDataset(rng, "../data/data_100_540_long.jls", vecs_100, 100)
-	generateTestingDataset(rng, "../data/data_100_27_long.jls", vecs_100, 100)
-end
-
-# ╔═╡ 1911b287-9edd-4e3c-aefa-92ca4df64f96
-begin
-		vecs_256 = constructInputVecs(rng, 256)
-		generateTrainingDataset(rng, "../data/data_256_540.jls", vecs_256, 50)
-		generateTestingDataset(rng, "../data/data_256_27.jls", vecs_256, 50)
-end
-
-# ╔═╡ 3a2ceccf-1d3e-424d-9c87-d89a44c79a48
-begin
-			generateTrainingDataset(rng, "../data/data_256_540_long.jls", vecs_256, 100)
-			generateTestingDataset(rng, "../data/data_256_27_long.jls", vecs_256, 100)
+	vecs = constructInputVecs(rng)
+	generateTrainingDataset(rng, "../data/data_540.jls", vecs)
+	generateTestingDataset(rng, "../data/data_27.jls", vecs)
 end
 
 # ╔═╡ b2b1890d-338e-429a-9f10-71b33e9c68cd
@@ -211,7 +185,7 @@ function loadData(output_file::String)
 end
 
 # ╔═╡ ce6e9c35-1ffe-4b25-8b01-48d1ece41045
-interpolate_array, ouput = loadData("../data/data_100_27_long.jls")
+interpolate_array, ouput = loadData("../data/data_27.jls")
 
 # ╔═╡ 5f7bec94-9367-43ce-9919-7366db3b2c81
 typeof(interpolate_array)
@@ -295,9 +269,9 @@ version = "4.1.2"
 
 [[deps.CUDA_Driver_jll]]
 deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
-git-tree-sha1 = "498f45593f6ddc0adff64a9310bb6710e851781b"
+git-tree-sha1 = "10ca2b63b496edc09258b3de5d1aa64094b18b1d"
 uuid = "4ee394cb-3365-5eb0-8335-949819d2adfc"
-version = "0.5.0+1"
+version = "0.5.0+0"
 
 [[deps.CUDA_Runtime_Discovery]]
 deps = ["Libdl"]
@@ -307,9 +281,9 @@ version = "0.2.0"
 
 [[deps.CUDA_Runtime_jll]]
 deps = ["Artifacts", "CUDA_Driver_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "81eed046f28a0cdd0dc1f61d00a49061b7cc9433"
+git-tree-sha1 = "802b1f2220fd43251d343219adf478e6b7992bd4"
 uuid = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
-version = "0.5.0+2"
+version = "0.5.0+0"
 
 [[deps.CUDNN_jll]]
 deps = ["Artifacts", "CUDA_Runtime_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
@@ -930,10 +904,6 @@ version = "17.4.0+0"
 # ╟─b9a1ddc9-86e0-4e5b-8e6f-b623a3f1714e
 # ╠═aa80beed-a235-4074-ba84-ba4562075481
 # ╠═ad118a60-6794-4230-8cd0-6cd3d0b52bf3
-# ╠═eb1cf697-051e-4f4f-98b6-dd5ffdf26ef9
-# ╠═7cde92f9-8681-48e6-97e8-f83ea4333d64
-# ╠═1911b287-9edd-4e3c-aefa-92ca4df64f96
-# ╠═3a2ceccf-1d3e-424d-9c87-d89a44c79a48
 # ╟─b2b1890d-338e-429a-9f10-71b33e9c68cd
 # ╠═02c6940e-0ac0-4942-8fe5-1dd836e5c594
 # ╠═a4b73010-f353-4437-aa2a-0ef1e7f50464

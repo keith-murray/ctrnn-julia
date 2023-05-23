@@ -1,0 +1,94 @@
+\relax 
+\citation{Inhelder1964-INHTEG}
+\citation{sussillo2013opening,mante2013context,driscoll2022flexible,kay2022neural}
+\citation{driscoll2022flexible}
+\citation{strogatz2018nonlinear}
+\citation{kay2022neural}
+\citation{kay2022neural}
+\citation{driscoll2022flexible}
+\citation{kay2022neural}
+\citation{gordon2017joy}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {II}Background}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Dynamical motifs in RNNs}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Dynamical motifs for transitive inference}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Why do interpretable dynamical motifs emerge?}{1}{}\protected@file@percent }
+\newlabel{interpretablemotifs}{{\mbox  {II-C}}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Methodology}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Task}{1}{}\protected@file@percent }
+\newlabel{taskmethod}{{\mbox  {III-A}}{1}}
+\citation{kay2022neural}
+\citation{richards2019deep}
+\citation{bezanson2017julia}
+\citation{pal2022lux}
+\citation{rackauckas2017differentialequations,rackauckas2020universal}
+\citation{loshchilov2017decoupled}
+\citation{sussillo2013opening,mante2013context,driscoll2022flexible,kay2022neural}
+\citation{langdon2022latent}
+\citation{b27}
+\citation{chaisangmongkon2017computing}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces A sample trial showing the colors purple, green, and red being presented. This trial constitutes a valid pattern.}}{2}{}\protected@file@percent }
+\newlabel{trial}{{1}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Model}{2}{}\protected@file@percent }
+\newlabel{ctrnnmodel}{{\mbox  {III-B}}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Analysis}{2}{}\protected@file@percent }
+\newlabel{analysismodel}{{\mbox  {III-C}}{2}}
+\citation{tivno1998finite}
+\citation{strogatz2018nonlinear}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces An illustration of our hypothesized low-dimensional, learned representation in the form of a hexagonal fixed-point network. Filled fixed points represent accepted patterns, while empty ones denote rejected patterns. Note that all transitions triggered by a specific color stimulus maintain a consistent directionality. The architecture of this network allows for linear segregation of accepting and rejecting fixed points in PC 3, simplifying classification tasks.}}{3}{}\protected@file@percent }
+\newlabel{hypothesisFSA}{{2}{3}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Results}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Accuracy and Preliminary Analysis}{3}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Three examples of stimuli presented during trials and the models associated output. The top row shows a valid pattern trial, resulting in a model output of $+1$. The middle row presents a trial with no color stimulus and demonstrates the model completing two full oscillations in a single trial. The bottom row shows an invalid pattern trial, resulting in a model output of $-1$. Note the \textit  {perturbations} due to stimulus presentation in the top and bottom rows.}}{3}{}\protected@file@percent }
+\newlabel{exampletrialstimuli}{{3}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}PCA results}{3}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces This figure illustrates a low-dimensional representation of the model's trajectories, showing distinct clusterings at the endpoints of both accepted and rejected patterns. The trajectory validates the underlying dynamics of the model as a limit cycle. The clusterings at the endpoints of trajectories for accepted and rejected patterns imply that stimulus presentations induce phase shifts along this limit cycle.}}{4}{}\protected@file@percent }
+\newlabel{pcasummary}{{4}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces This figure depicts the model's firing rates across four trials with various stimuli, projected onto the rotated PC 1 over time. The influence of stimulus presentation on the dynamics of the rotated PC 1 is visible. The Green, Green, Green trial shows minimal change compared to the no stimulus trial. When comparing the Red, Red, Red trial to the Purple, Purple, Purple trial, it appears that the red stimulus may reduce the phase of the oscillation while the purple stimulus may increase it.}}{4}{}\protected@file@percent }
+\newlabel{pcaacceptedsets}{{5}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces This figure depicts the updated FSA that represents the underlying dynamics and computation of our trained model. The model begins at a phase angle of $0$ degrees, and stimulus presentations trigger transitions to other nodes, each representing a distinct phase angle.}}{4}{}\protected@file@percent }
+\newlabel{resultingfsa}{{6}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Simplifying the model}{4}{}\protected@file@percent }
+\newlabel{simpmodel}{{5}{4}}
+\citation{b26}
+\citation{mante2013context}
+\citation{chaisangmongkon2017computing}
+\citation{driscoll2022flexible}
+\citation{jaeger2021towards}
+\citation{hoppensteadt1999oscillatory}
+\citation{pals2023trained}
+\citation{hoppensteadt1999oscillatory}
+\citation{pals2023trained}
+\citation{langdon2022latent}
+\citation{b28}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces This figure illustrates the projected trajectories of several invalid patterns onto the rotated PC 1. The depicted trajectories confirm the model's behavior according to our updated FSA, validating our predictions about the final phase for different stimulus sequences.}}{5}{}\protected@file@percent }
+\newlabel{pcarejectedsets}{{7}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces This figure illustrates three examples of the trajectories of our simplified model in comparison to the rotated PC 1 of the full model. The top row displays both models in a purple, green, purple trial. The middle row shows both models in a purple, green, red trial. The bottom row represents both models in a red, green, red trial.}}{5}{}\protected@file@percent }
+\newlabel{constructedmodel}{{8}{5}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Discussion}{5}{}\protected@file@percent }
+\citation{nanda2023progress}
+\bibcite{Inhelder1964-INHTEG}{1}
+\bibcite{sussillo2013opening}{2}
+\bibcite{mante2013context}{3}
+\bibcite{driscoll2022flexible}{4}
+\bibcite{kay2022neural}{5}
+\bibcite{strogatz2018nonlinear}{6}
+\bibcite{gordon2017joy}{7}
+\bibcite{richards2019deep}{8}
+\bibcite{bezanson2017julia}{9}
+\bibcite{pal2022lux}{10}
+\bibcite{rackauckas2020universal}{11}
+\bibcite{rackauckas2017differentialequations}{12}
+\bibcite{loshchilov2017decoupled}{13}
+\bibcite{langdon2022latent}{14}
+\bibcite{b27}{15}
+\bibcite{chaisangmongkon2017computing}{16}
+\bibcite{tivno1998finite}{17}
+\bibcite{b26}{18}
+\bibcite{jaeger2021towards}{19}
+\bibcite{hoppensteadt1999oscillatory}{20}
+\bibcite{pals2023trained}{21}
+\bibcite{b28}{22}
+\bibcite{nanda2023progress}{23}
+\@writefile{toc}{\contentsline {section}{References}{6}{}\protected@file@percent }
+\gdef \@abspage@last{6}

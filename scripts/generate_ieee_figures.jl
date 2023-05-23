@@ -4,67 +4,32 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 2c7f6b4f-c8bd-4a72-9a7c-728c0dbb1f63
+# ╔═╡ 6130333a-fd35-40da-9b07-8eb0211a2287
 using Serialization, ComponentArrays, Lux, Random, OrdinaryDiffEq, LinearAlgebra, NNlib, SciMLSensitivity, DataFrames, Statistics, Optimisers, Zygote, MultivariateStats, AlgebraOfGraphics, CairoMakie
 
-# ╔═╡ 402e5461-5c4b-40bf-84ab-95be1fc219e9
+# ╔═╡ de2ce18f-63d9-4ff6-82e8-7b25ddef28fe
 begin
 	include("../RecurrentNetworks/src/load_SET_data.jl")
 	include("../RecurrentNetworks/src/neuralode.jl")
 	include("../RecurrentNetworks/src/training_funcs.jl")
 end
 
-# ╔═╡ 1b45cd8a-cfe7-11ed-24dc-a1c5dfe6e994
-md"# Examine saved models"
+# ╔═╡ 3f8029b8-d445-11ed-24c0-d79618051cb9
+md"# Generate BDA Figures"
 
-# ╔═╡ 486c7200-d918-47ee-8a65-8d698bc61e09
-md"""
-The purpose of this notebook is to examine the learned representations and accuracies of saved models.
-"""
+# ╔═╡ 924643fb-7ecd-481c-8660-09c40122096d
+md"The purpose of this notebook is to generate the figures used in our submission to the Biological Distributed Algorithms (BDA) workshop."
 
-# ╔═╡ 1f31c77a-5554-4f51-b4c2-7c01f963b043
+# ╔═╡ 3e8c41ed-bdc3-45a9-8abd-373752994ef3
 md"## Setup"
 
-# ╔═╡ 842ee6bc-9a65-48b3-afcb-ea2d13bc11cd
-md"### Add NeuralODE code"
+# ╔═╡ a21b9b68-f97f-4961-94b4-739105528e4a
+md"#### Add NeuralODE code"
 
-# ╔═╡ 9fda22ce-e481-45b2-b9ae-84639a88a655
-md"## Load model"
-
-# ╔═╡ 30e0e0f1-b4da-4eff-b4c4-913ba546d831
-function loadModel(output_file::String)
-	open(output_file, "r") do f
-		ps = deserialize(f)
-		accuracies = deserialize(f)
-		return ps, accuracies
-	end
-end
-
-# ╔═╡ 440b365c-858b-4f42-8b55-3b2a40097734
-begin
-	ps, accuracies = loadModel("../data/models/model_31.jls")
-	rng = Random.default_rng()
-    Random.seed!(rng, 0)
-	model, ps_no, st = create_model(rng, 1.0f0, 0.75f0, 1.5f0, 0.01f0, 0.00f0, 0.00f0)
-end
-
-# ╔═╡ 0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
-begin
-	df_accuracies = DataFrame(
-	    epochs = 1:length(accuracies[1,:]),
-	    loss = accuracies[1,:],
-	)
-	plt_accuracies = data(df_accuracies) * mapping(:epochs, :loss) * visual(Lines)
-	draw(plt_accuracies)
-end
-
-# ╔═╡ eb9babfb-1390-43c1-929e-f8d726aa649e
-accuracies[:,end]
-
-# ╔═╡ 7563f413-ea07-4e41-8381-a22a45b8410b
+# ╔═╡ 3a59d3fa-23cf-439f-be84-a93d2c074df9
 md"## Load data"
 
-# ╔═╡ 96f315e3-428e-4bf3-a206-58573ce6204e
+# ╔═╡ e72dff62-f28d-4d3a-9864-f8b7588cec47
 begin
 	IC = ones(Float32, 100)
     training_input_funcs, training_output = loadData("../data/data_540.jls")
@@ -73,145 +38,621 @@ begin
 	testing_data = (ArrayAndFuncs(IC, testing_input_funcs), testing_output)
 end
 
-# ╔═╡ a1d043d0-5bb1-4147-9911-5c711bf0da6f
-md"### Add display method for `Interpolate`"
-
-# ╔═╡ 87ad1e54-95c1-4774-883f-f80cee036b28
+# ╔═╡ c05c2be9-6954-4efd-905d-7625f1db51a9
 function (itp::Interpolate)(t::Float64)
 	i = searchsortedfirst(itp.locations, t)
 	@inbounds itp.SET[i] - 1
 end
 
-# ╔═╡ 37ccbba2-861b-46dd-a25d-1068ad7e124a
-md"## Test model"
-
-# ╔═╡ 14cdf7d2-e840-4b90-afe7-c24e21f38357
-md"### Training data"
-
-# ╔═╡ b0316255-000c-448f-a25c-ffa3a23c405e
-test_accuracy(model, ps, st, training_data[1], training_data[2])
-
-# ╔═╡ 95b45cf6-2ecc-4161-afc9-dca24fa29c9f
-md"### Testing data"
-
-# ╔═╡ acd468ca-3d9e-44fb-afcc-4ce6bbb978f2
-test_accuracy(model, ps, st, testing_data[1], testing_data[2])
-
-# ╔═╡ 61615ec6-7032-4f77-b2db-8b22b8c2c0d2
-md"## What is the testing SET number?"
-
-# ╔═╡ 6077af0b-1833-46f4-8c68-2a5b7a23c69d
-SET_num = 4
-
-# ╔═╡ f2977d62-4b44-44de-9cd1-a7ecfadc0423
-md"## Visualize low-dimensional dynamics"
-
-# ╔═╡ 89518552-0c8c-4fad-8cf1-2a79f70e3d34
-function input_to_mat(arr)
-	m = zeros(Int, 3, 50)
+# ╔═╡ da919f4f-ecc2-4afc-976e-35cdcb240b90
+function input_to_mat(arr, time)
+	m = zeros(Int, 3, length(time))
 	m[1, arr .== 1] .= 1
 	m[2, arr .== 2] .= 1
 	m[3, arr .== 3] .= 1
 	return m
 end
 
-# ╔═╡ 7b8f283b-4a39-443b-b7cc-300301db3c46
+# ╔═╡ 31483b23-3904-400c-9e4e-892a308b2847
+md"### Generate sample data plot"
+
+# ╔═╡ 0f1ab940-1701-4da7-ae07-ce0555225c5b
+begin
+	display_time = 0.00:0.0001:0.50
+	SET_amplitude_matrix = input_to_mat(reduce(vcat, testing_input_funcs[4].(display_time)), display_time)
+	df_SET = DataFrame()
+	df_SET[!, "time (s)"] = vcat(display_time, display_time, display_time)
+	df_SET[!, "Stimulus impulse"] = vcat(SET_amplitude_matrix[1,:], SET_amplitude_matrix[2,:], SET_amplitude_matrix[3,:])
+	df_SET[!, "Color values"] = vcat(["Green" for i in 1:length(display_time)], ["Purple" for i in 1:length(display_time)],["Red" for i in 1:length(display_time)])
+	plt_SET = data(df_SET) * mapping(:"time (s)", :"Stimulus impulse"; color=:"Color values") * visual(Lines)
+	colors_SET = ["Green" => colorant"#5CD629", "Purple" => colorant"#662BF0", "Red" => colorant"#DA3A32"]
+	fg_SET = draw(plt_SET; palettes=(color=colors_SET,))
+end
+
+# ╔═╡ 283f832b-5183-4869-8b19-1a76525fa0df
+save("../results/figures/example_trial.png", fg_SET, px_per_unit = 3)
+
+# ╔═╡ 534dd493-503b-4c91-8f9e-13b7f0031de4
+md"## Load model"
+
+# ╔═╡ cdf390eb-9780-46f6-8adf-5e595e4e1786
+function loadModel(output_file::String)
+	open(output_file, "r") do f
+		ps = deserialize(f)
+		accuracies = deserialize(f)
+		return ps, accuracies
+	end
+end
+
+# ╔═╡ 313a3d11-ca98-46e6-b59a-9df0ee9134c3
+begin
+	ps, accuracies = loadModel("../data/models/model_31.jls")
+	rng = Random.default_rng()
+    Random.seed!(rng, 0)
+	model, ps_no, st = create_model(rng, 1.0f0, 0.75f0, 1.5f0, 0.01f0, 0.00f0, 0.00f0) # The model will have no noise for PCA
+end
+
+# ╔═╡ cc2d4643-667b-4c11-a666-4dc99e4762f0
+md"#### Generate training and testing loss curves"
+
+# ╔═╡ a401b611-bc1a-46e5-b426-3df277c53861
+begin
+	df_accuracies = DataFrame(
+	    epochs = vcat(1:length(accuracies[1,:]), 1:length(accuracies[1,:])),
+	    loss = vcat(accuracies[1,:], accuracies[2,:]),
+	)
+	df_accuracies[!, "Trial type"] = vcat(["Training" for i in 1:length(accuracies[1,:])], ["Testing" for i in 1:length(accuracies[1,:])])
+	plt_accuracies = data(df_accuracies) * mapping(:epochs, :loss; color=:"Trial type") * visual(Lines)
+	colors_accuracies = ["Training" => colorant"#F0B72B", "Testing" => colorant"#29E6E5"]
+	fg_draw = draw(plt_accuracies; palettes=(color=colors_accuracies,))
+end
+
+# ╔═╡ 10488006-8c27-44d5-a597-aa652f34c5d2
+save("../results/figures/loss_curve.png", fg_draw, px_per_unit = 3)
+
+# ╔═╡ 9512bf14-ffe8-44bd-8642-fada6053032f
+md"## View example outputs"
+
+# ╔═╡ ce1396be-de81-4402-b8a1-ef59056aa89b
 begin
 	time_range = 0.01f0:0.01f0:0.50f0
-	input = input_to_mat(reduce(vcat, testing_input_funcs[SET_num].(0.01:0.01:0.50)))
+	time_range_example = 0.01:0.01:0.50
 	(y_out_train, r_out_train), st_out = model(training_data[1], ps, st)
 	(y_out_test, r_out_test), st_out = model(testing_data[1], ps, st)
 	cat_r_out = reduce(hcat, r_out_train[:,:,i] for i in 1:size(r_out_train)[3])
-	M = fit(PCA, cat_r_out;)
-	pc_rates = predict(M, r_out_test[:,:,SET_num])
-	y = y_out_test[1,:,SET_num]
-	df_rates = DataFrame(
-		time = time_range,
-		out = y,
-		pc_1= pc_rates[1,:],
-		pc_2 = pc_rates[2,:],
-		pc_3 = pc_rates[3,:],
-		pc_4 = pc_rates[4,:],
-		pc_5 = pc_rates[5,:],
-	)
-	md"This is data."
+	md"some data"
 end
 
-# ╔═╡ 22e0610d-b673-4a25-8a99-341235eed758
+# ╔═╡ a0dfcf84-5351-4e46-9366-aac27a721553
 begin
-	df_input = DataFrame(
-	    time = vcat(time_range, time_range, time_range, time_range),
-	    signal = vcat(input[1, :], 
-					  input[2, :],
-					  input[3, :],
-					  y),
-		type_of_signal = vcat(["attribute 1" for i in 1:50],
-							  ["attribute 2" for i in 1:50],
-							  ["attribute 3" for i in 1:50],
-							  ["output" for i in 1:50]),
-	)
-	plt_input = data(df_input) * mapping(:time, :signal; color=:type_of_signal) * visual(Lines)
-	draw(plt_input)
+	blank_interpolate = Interpolate([1,1], [0.25f0,], testing_input_funcs[1].vecs)
+	blank_data = ArrayAndFuncs(IC, [blank_interpolate, ])
+	(y_out_blank, r_out_blank), _ = model(blank_data, ps, st)
+	r_out_blank = r_out_blank[:, :, 1]
+	md"blank data"
 end
 
-# ╔═╡ c14800f8-4c67-44b0-8b0a-3b3bf1e4bc47
+# ╔═╡ d101c7c2-84a7-4f02-815e-cd16925fbf73
 begin
-	df_pc_time = DataFrame(
-	    time = vcat(time_range, time_range, time_range, time_range,time_range,time_range,time_range,time_range),
-	    signal = vcat(input[1, :], 
-					  input[2, :],
-					  input[3, :],
-					  pc_rates[1,:],
-					  pc_rates[2,:],
-					  pc_rates[3,:],
-					  pc_rates[4,:],
-					  pc_rates[5,:]),
-		type_of_signal = vcat(["attribute 1" for i in 1:50],
-							  ["attribute 2" for i in 1:50],
-							  ["attribute 3" for i in 1:50],
-							  ["PC 1" for i in 1:50],
-							  ["PC 2" for i in 1:50],
-							  ["PC 3" for i in 1:50],
-							  ["PC 4" for i in 1:50],
-							  ["PC 5" for i in 1:50]),
+	SET_accept_num = 4
+	SET_reject_num = 17
+	SET_accept_matrix = input_to_mat(reduce(vcat, testing_input_funcs[SET_accept_num].(time_range_example)), time_range)
+	SET_reject_matrix = input_to_mat(reduce(vcat, testing_input_funcs[SET_reject_num].(time_range_example)), time_range)
+	
+	df_example_outputs = DataFrame(
+	    Amplitude = vcat(SET_accept_matrix[1,:], 
+						 SET_accept_matrix[2,:],
+						 SET_accept_matrix[3,:],
+						 y_out_test[1,:,SET_accept_num],
+						 SET_reject_matrix[1,:],
+						 SET_reject_matrix[2,:],
+						 SET_reject_matrix[3,:],
+						 y_out_test[1,:,SET_reject_num],
+						 y_out_blank[1,:,1],
+		),
+		row_iden = vcat(["Accepted stimulus" for i in 1:(4*length(time_range))],
+						["Rejected stimulus" for i in 1:(4*length(time_range))],
+						["No stimulus" for i in 1:length(time_range)],
+		),
 	)
-	plt_pc_time = data(df_pc_time) * mapping(:time, :signal; color=:type_of_signal) * visual(Lines)
-	draw(plt_pc_time)
+	
+	df_example_outputs[!, "time (s)"] = vcat(time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range)
+	df_example_outputs[!, "Type of signal"] = vcat(
+		["Green" for i in 1:length(time_range)], 
+		["Purple" for i in 1:length(time_range)],
+		["Red" for i in 1:length(time_range)],
+		["Output" for i in 1:length(time_range)],
+		["Green" for i in 1:length(time_range)], 
+		["Purple" for i in 1:length(time_range)],
+		["Red" for i in 1:length(time_range)],
+		["Output" for i in 1:length(time_range)],
+		["Output" for i in 1:length(time_range)],
+	)
+	
+	plt_SET_example = data(df_example_outputs) * mapping(:"time (s)", :Amplitude; color=:"Type of signal", row=:row_iden) * visual(Lines)
+	colors_SET_example = ["Green" => colorant"#5CD629", "Purple" => colorant"#662BF0", "Red" => colorant"#DA3A32", "Output" => colorant"#F0B72B"]
+	fg_SET_example = draw(plt_SET_example; palettes=(color=colors_SET_example,))
 end
 
-# ╔═╡ bed99a57-ed0f-455b-9df1-610a3b3c8934
+# ╔═╡ f41d4286-7807-4077-ab17-1e898de41633
+save("../results/figures/SET_examples.png", fg_SET_example, px_per_unit = 3)
+
+# ╔═╡ 244c5a30-05f0-4539-947a-f573261396f1
+md"## View PCA trajectories"
+
+# ╔═╡ 3d09d055-304e-44c2-9a6f-97d4ba33006d
+M = fit(PCA, cat_r_out;)
+
+# ╔═╡ 9dbbafa4-2a02-4731-8ccf-0a17af68feee
 begin
+	train_num = size(r_out_train, 3)
+	pc_rates_all = zeros(12, size(r_out_train, 2), train_num)
+	
+	for SET_num in 1:train_num
+	    pc_rates_curr = predict(M, r_out_train[:,:,SET_num])
+	    pc_rates_all[:,:,SET_num] = pc_rates_curr
+	end
+
+	blank_pc_1_2 = predict(M, r_out_blank)
+	accept_pc_1_2 = pc_rates_all[:,end,1:270]
+	reject_pc_1_2 = pc_rates_all[:,end,271:end]
+	md"more data"
+end
+
+# ╔═╡ 14431077-82aa-4e82-8e06-6689a722ce8a
+begin
+	df_avg_train = DataFrame()
+	df_avg_train[!, "PC 1"] = blank_pc_1_2[1,:]
+	df_avg_train[!, "PC 2"] = blank_pc_1_2[2,:]
+	df_avg_train[!, "Data"] = ["No stimulus PCA trajectory" for i in 1:length(blank_pc_1_2[2,:])]
+
+	df_train_accept = DataFrame()
+	df_train_accept[!, "PC 1"] = accept_pc_1_2[1,:]
+	df_train_accept[!, "PC 2"] = accept_pc_1_2[2,:]
+	df_train_accept[!, "Data"] = ["Accepted stimulus" for i in 1:length(accept_pc_1_2[2,:])]
+
+	df_train_reject = DataFrame()
+	df_train_reject[!, "PC 1"] = reject_pc_1_2[1,:]
+	df_train_reject[!, "PC 2"] = reject_pc_1_2[2,:]
+	df_train_reject[!, "Data"] = ["Rejected stimulus" for i in 1:length(reject_pc_1_2[2,:])]
+	
+	plt_avg_test = data(df_avg_train) * visual(Lines) + data(df_train_accept) * visual(Scatter) + data(df_train_reject) * visual(Scatter)
+	colors_avg_test = [
+		"No stimulus PCA trajectory" => colorant"#662BF0",
+		"Accepted stimulus" => colorant"#5CD629",
+		"Rejected stimulus" => colorant"#DA3A32"
+	]
+	fg_avg_test = draw(
+		plt_avg_test * mapping(:"PC 1", :"PC 2"; color=:"Data"); 
+		palettes=(color=colors_avg_test,)
+	)
+end
+
+# ╔═╡ 8b8cacfd-ae08-4723-814d-0fadccdee144
+md"Woah. Just woah. This is beautiful. There is beauty in science."
+
+# ╔═╡ 6981238a-461c-45e0-992e-ab7bfc5e5452
+begin
+	save("../results/figures/pca_summary.png", fg_avg_test, px_per_unit = 3)
+end
+
+# ╔═╡ a9522038-d4cb-4c5f-ae04-6a6e9bc3a63f
+md"## Visualize individual examples"
+
+# ╔═╡ a1e2f6cc-0251-43b7-b191-3323f71007d3
+md"#### Accepted example"
+
+# ╔═╡ 3b784583-5555-4750-aa47-eeee7adf06c0
+begin
+	pc_rates_accepted = predict(M, r_out_test[:,:,SET_accept_num])
+
+	rates_accepted_pc3 = DataFrame()
+	rates_accepted_pc3[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
+	rates_accepted_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc4 = DataFrame()
+	rates_accepted_pc4[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc4[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc4[!, "PC 3,4,5"] = pc_rates_accepted[4,:]
+	rates_accepted_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_accepted_pc5 = DataFrame()
+	rates_accepted_pc5[!, "PC 1"] = pc_rates_accepted[1,:]
+	rates_accepted_pc5[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_accepted_pc5[!, "PC 3,4,5"] = pc_rates_accepted[5,:]
+	rates_accepted_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted[1,:])]
+
 	axis = (type = Axis3, width = 300, height = 300)
-	layers = visual(Lines)
-	plt_rates = data(df_rates) * mapping(:pc_1, :pc_2) * layers * mapping(:pc_3)
-	f1 = Figure()
-	draw!(f1, plt_rates; axis=axis)
-	f1
+	plt_data_pc_accepted = data(rates_accepted_pc3) * visual(Lines) + data(rates_accepted_pc4) * visual(Lines) + data(rates_accepted_pc5) * visual(Lines)
+	plt_pc_accepted = plt_data_pc_accepted * mapping(:"PC 1", :"PC 2"; color=:"Data") * mapping(:"PC 3,4,5")
+	colors_pc = [
+		"PC 3" => colorant"#DA3A32",
+		"PC 4" => colorant"#662BF0",
+		"PC 5" => colorant"#5CD629"
+	]
+	fg_pc_accepted = draw(
+		plt_pc_accepted; 
+		axis=axis,
+		palettes=(color=colors_pc,)
+	)
 end
 
-# ╔═╡ c9c845db-7d0e-401b-9e84-46503b9c732d
+# ╔═╡ e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
+save(
+	"../results/figures/pca_accepted_summary.png", 
+	fg_pc_accepted, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 48157dd9-99d0-4833-8d21-a4d277ffe063
 begin
-	plt_pc_1_2 = data(df_rates) * mapping(:pc_1, :pc_2) * layers
-	f2 = Figure()
-	draw!(f2, plt_pc_1_2)
-	f2
+	pc_rates_accepted_2d = predict(M, r_out_test[:,:,SET_accept_num])
+
+	rates_accepted_pc3_2d = DataFrame()
+	rates_accepted_pc3_2d[!, "time (s)"] = time_range
+	rates_accepted_pc3_2d[!, "PC 1"] = pc_rates_accepted_2d[1,:]
+	rates_accepted_pc3_2d[!, "PC 2"] = pc_rates_accepted_2d[2,:]
+	rates_accepted_pc3_2d[!, "PC 3,4,5"] = pc_rates_accepted_2d[3,:]
+	rates_accepted_pc3_2d[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_accepted_2d[1,:])]
+
+	rates_accepted_pc4_2d = DataFrame()
+	rates_accepted_pc4_2d[!, "time (s)"] = time_range
+	rates_accepted_pc4_2d[!, "PC 1"] = pc_rates_accepted_2d[1,:]
+	rates_accepted_pc4_2d[!, "PC 2"] = pc_rates_accepted_2d[2,:]
+	rates_accepted_pc4_2d[!, "PC 3,4,5"] = pc_rates_accepted_2d[4,:]
+	rates_accepted_pc4_2d[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_accepted_2d[1,:])]
+
+	rates_accepted_pc5_2d = DataFrame()
+	rates_accepted_pc5_2d[!, "time (s)"] = time_range
+	rates_accepted_pc5_2d[!, "PC 1"] = pc_rates_accepted_2d[1,:]
+	rates_accepted_pc5_2d[!, "PC 2"] = pc_rates_accepted_2d[2,:]
+	rates_accepted_pc5_2d[!, "PC 3,4,5"] = pc_rates_accepted_2d[5,:]
+	rates_accepted_pc5_2d[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_accepted_2d[1,:])]
+
+	plt_data_pc_accepted_2d = data(rates_accepted_pc3_2d) * visual(Lines) + data(rates_accepted_pc4_2d) * visual(Lines) + data(rates_accepted_pc5_2d) * visual(Lines)
+	plt_pc_accepted_2d = plt_data_pc_accepted_2d * mapping(:"time (s)", :"PC 3,4,5"; color=:"Data")
+	colors_pc_2d = [
+		"PC 3" => colorant"#DA3A32",
+		"PC 4" => colorant"#662BF0",
+		"PC 5" => colorant"#5CD629"
+	]
+	fg_pc_accepted_2d = draw(
+		plt_pc_accepted_2d; 
+		palettes=(color=colors_pc_2d,)
+	)
 end
 
-# ╔═╡ c8a90012-1cd5-4846-a04e-a40c3f63d359
+# ╔═╡ 03b00181-a2f7-42d8-91c0-3b6318a42664
+save(
+	"../results/figures/pca_accepted_2D_summary.png", 
+	fg_pc_accepted_2d, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 0a156e28-302e-4d7e-80e4-d91ddcfc0ca9
 begin
-	plt_pc_1_3 = data(df_rates) * mapping(:pc_1, :pc_3) * layers
-	f3 = Figure()
-	draw!(f3, plt_pc_1_3)
-	f3
+	pc_rates_reject = predict(M, r_out_test[:,:,SET_reject_num])
+
+	rates_reject_pc3 = DataFrame()
+	rates_reject_pc3[!, "PC 1"] = pc_rates_reject[1,:]
+	rates_reject_pc3[!, "PC 2"] = pc_rates_accepted[2,:]
+	rates_reject_pc3[!, "PC 3,4,5"] = pc_rates_accepted[3,:]
+	rates_reject_pc3[!, "Data"] = ["PC 3" for i in 1:length(pc_rates_reject[1,:])]
+
+	rates_reject_pc4 = DataFrame()
+	rates_reject_pc4[!, "PC 1"] = pc_rates_reject[1,:]
+	rates_reject_pc4[!, "PC 2"] = pc_rates_reject[2,:]
+	rates_reject_pc4[!, "PC 3,4,5"] = pc_rates_reject[4,:]
+	rates_reject_pc4[!, "Data"] = ["PC 4" for i in 1:length(pc_rates_reject[1,:])]
+
+	rates_reject_pc5 = DataFrame()
+	rates_reject_pc5[!, "PC 1"] = pc_rates_reject[1,:]
+	rates_reject_pc5[!, "PC 2"] = pc_rates_reject[2,:]
+	rates_reject_pc5[!, "PC 3,4,5"] = pc_rates_reject[5,:]
+	rates_reject_pc5[!, "Data"] = ["PC 5" for i in 1:length(pc_rates_reject[1,:])]
+
+	plt_data_pc_reject = data(rates_reject_pc3) * visual(Lines) + data(rates_reject_pc4) * visual(Lines) + data(rates_reject_pc5) * visual(Lines)
+	plt_pc_reject = plt_data_pc_reject * mapping(:"PC 1", :"PC 2"; color=:"Data") * mapping(:"PC 3,4,5")
+	fg_pc_reject = draw(
+		plt_pc_reject; 
+		axis=axis,
+		palettes=(color=colors_pc,)
+	)
 end
 
-# ╔═╡ 5e6cf0cd-4581-4a5e-aa54-08ef9e76d672
+# ╔═╡ c80933e9-0a97-42dd-8969-19c06bc2b074
+save(
+	"../results/figures/pca_rejected_summary.png", 
+	fg_pc_reject, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 53152ffc-4d3f-483b-b673-4b8309266a04
+md"## Rotate data"
+
+# ╔═╡ 47d56bf2-d45e-40d7-8df9-f81a7a2c5890
 begin
-	plt_pc_2_3 = data(df_rates) * mapping(:pc_2, :pc_3) * layers
-	f4 = Figure()
-	draw!(f4, plt_pc_2_3)
-	f4
+	theta = 60
+	theta_rad = deg2rad(theta)
+	R = [cos(theta_rad) -sin(theta_rad);
+	     sin(theta_rad) cos(theta_rad)]
 end
+
+# ╔═╡ f8f265f3-d4a5-4768-94b5-8be192cdb2e3
+begin
+	df_avg_train_r = DataFrame()
+	df_avg_train_r[!, "Rotated PC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
+	df_avg_train_r[!, "Rotated PC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
+	df_avg_train_r[!, "Data"] = ["No stimulus PCA trajectory" for i in 1:length(blank_pc_1_2[2,:])]
+
+	df_train_accept_r = DataFrame()
+	df_train_accept_r[!, "Rotated PC 1"] = (R[1:1,:]*accept_pc_1_2[1:2,:])[1,:]
+	df_train_accept_r[!, "Rotated PC 2"] = (R[2:2,:]*accept_pc_1_2[1:2,:])[1,:]
+	df_train_accept_r[!, "Data"] = ["Accepted stimulus" for i in 1:length(accept_pc_1_2[2,:])]
+
+	df_train_reject_r = DataFrame()
+	df_train_reject_r[!, "Rotated PC 1"] = (R[1:1,:]*reject_pc_1_2[1:2,:])[1,:]
+	df_train_reject_r[!, "Rotated PC 2"] = (R[2:2,:]*reject_pc_1_2[1:2,:])[1,:]
+	df_train_reject_r[!, "Data"] = ["Rejected stimulus" for i in 1:length(reject_pc_1_2[2,:])]
+	
+	plt_avg_test_r = data(df_avg_train_r) * visual(Lines) + data(df_train_accept_r) * visual(Scatter) + data(df_train_reject_r) * visual(Scatter)
+	fg_avg_test_r = draw(
+		plt_avg_test_r * mapping(:"Rotated PC 1", :"Rotated PC 2"; color=:"Data"); 
+		palettes=(color=colors_avg_test,)
+	)
+end
+
+# ╔═╡ 73e8636c-887d-44dc-85d3-7469bceea418
+save(
+	"../results/figures/rotated_pc1_pc2_training.png", 
+	fg_avg_test_r, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 2b1bc0ca-12f8-49fe-bc90-5cd2954290ab
+begin
+	ggg_rates = predict(M, r_out_test[:,:,1])
+	ppp_rates = predict(M, r_out_test[:,:,5])
+	rrr_rates = predict(M, r_out_test[:,:,9])
+
+	rates_accepted_ggg = DataFrame()
+	rates_accepted_ggg[!, "time (s)"] = time_range
+	rates_accepted_ggg[!, "Rotated PC 1"] = (R[1:1,:]*ggg_rates[1:2,:])[1,:]
+	rates_accepted_ggg[!, "Rotated PC 2"] = (R[2:2,:]*ggg_rates[1:2,:])[1,:]
+	rates_accepted_ggg[!, "Data"] = ["Green, Green, Green" for i in 1:length(ggg_rates[1,:])]
+	
+	rates_accepted_r = DataFrame()
+	rates_accepted_r[!, "time (s)"] = time_range
+	rates_accepted_r[!, "Rotated PC 1"] = (R[1:1,:]*rrr_rates[1:2,:])[1,:]
+	rates_accepted_r[!, "Rotated PC 2"] = (R[2:2,:]*rrr_rates[1:2,:])[1,:]
+	rates_accepted_r[!, "Data"] = ["Red, Red, Red" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_rejected_r = DataFrame()
+	rates_rejected_r[!, "time (s)"] = time_range
+	rates_rejected_r[!, "Rotated PC 1"] = (R[1:1,:]*ppp_rates[1:2,:])[1,:]
+	rates_rejected_r[!, "Rotated PC 2"] = (R[2:2,:]*ppp_rates[1:2,:])[1,:]
+	rates_rejected_r[!, "Data"] = ["Purple, Purple, Purple" for i in 1:length(pc_rates_reject[1,:])]
+
+	rates_blank_r = DataFrame()
+	rates_blank_r[!, "time (s)"] = time_range
+	rates_blank_r[!, "Rotated PC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
+	rates_blank_r[!, "Rotated PC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
+	rates_blank_r[!, "Data"] = ["No stimulus" for i in 1:length(pc_rates_reject[1,:])]
+	
+	colors_rotated_ex = [
+		 "Purple, Purple, Purple" => colorant"#662BF0",
+		"Green, Green, Green" => colorant"#5CD629",
+		"Red, Red, Red" => colorant"#DA3A32",
+		"No stimulus" => colorant"#F0B72B",
+	]
+	
+	plt_rotated_pc_examples = data(rates_accepted_r) * visual(Lines) + data(rates_rejected_r) * visual(Lines) + data(rates_accepted_ggg) * visual(Lines) + data(rates_blank_r) * visual(Lines)
+	fg_rotated_pc_example = draw(
+		plt_rotated_pc_examples * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_rotated_ex,)
+	)
+end
+
+# ╔═╡ 0bce1289-bd80-4375-87d0-435ea37487a6
+save(
+	"../results/figures/rotated_pc1_accepted.png", 
+	fg_rotated_pc_example, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 181204e1-efe0-4d76-9f4d-8750cab63c9d
+begin
+	pgp_rates = predict(M, r_out_test[:,:,17])
+	rgr_rates = predict(M, r_out_test[:,:,23])
+	
+	rates_rgr = DataFrame()
+	rates_rgr[!, "time (s)"] = time_range
+	rates_rgr[!, "Rotated PC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr[!, "Rotated PC 2"] = (R[2:2,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr[!, "Data"] = ["Red, Green, Red" for i in 1:length(pc_rates_accepted[1,:])]
+
+	rates_pgp = DataFrame()
+	rates_pgp[!, "time (s)"] = time_range
+	rates_pgp[!, "Rotated PC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp[!, "Rotated PC 2"] = (R[2:2,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp[!, "Data"] = ["Purple, Green, Purple" for i in 1:length(pc_rates_reject[1,:])]
+	
+	colors_rotated_ex_reject = [
+		 "Purple, Green, Purple" => colorant"#662BF0",
+		"Red, Green, Red" => colorant"#DA3A32",
+		"No stimulus" => colorant"#F0B72B",
+	]
+	
+	plt_rotated_pc_rej = data(rates_rgr) * visual(Lines) + data(rates_pgp) * visual(Lines) + data(rates_blank_r) * visual(Lines)
+	fg_rotated_pc_rej = draw(
+		plt_rotated_pc_rej * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_rotated_ex_reject,)
+	)
+end
+
+# ╔═╡ 3ff9f145-05c9-42d4-aa81-854520a14a6d
+save(
+	"../results/figures/rotated_pc1_rejected.png", 
+	fg_rotated_pc_rej, 
+	px_per_unit = 3
+)
+
+# ╔═╡ 491243b4-aea5-4e6c-a3f8-4d185658d8e8
+md"Green colors do not perturb the cycle. Purple colors add 2/3 pi radians to the cycle. Red colors subract 2/3 pi radians to the cycle."
+
+# ╔═╡ b723357c-dee5-4ceb-b9a7-f8940ec09e3b
+md"## Model cycles"
+
+# ╔═╡ fd16f5ac-1091-484c-bb1d-4ac46c38a85c
+begin
+	struct sine_wave
+		params::Array{Float64, 1}
+		phases::Array{Float64, 1}
+		time
+	end
+	
+	function (sn_fn::sine_wave)(itp::Interpolate)
+		time_series_result = zeros(length(sn_fn.time))
+		count = 1
+		skip = false
+		
+		phase_store = 0.0
+		for i in sn_fn.time
+			phase = itp(i) + 1
+			if phase != 1 & skip == true
+				phase = 1
+				skip = false
+			elseif phase != 1 & skip == false
+				skip = true
+			end
+			phase_store += sn_fn.phases[phase]
+			current_sine_value = sn_fn.params[1] * sin(sn_fn.params[2] * i + phase_store) + sn_fn.params[3]
+			time_series_result[count] = current_sine_value
+			count += 1
+		end
+		return time_series_result
+	end
+end
+
+# ╔═╡ 284f0c5f-ba19-4ee2-b139-9ebfdd8c130a
+begin
+	@. model_fit(t, p) = p[1] * sin(p[2]*t + p[3]) + p[4]
+	
+	sin_df = DataFrame()
+	sin_df[!, "time (s)"] = time_range
+	sin_df[!, "Rotated PC 1"] = model_fit(time_range, [7, 2*π/0.29, 0, -1.5])
+	sin_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+
+	colors_sines = ["No stimulus" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
+	
+	plt_sin = data(sin_df) * visual(Lines) + data(rates_blank_r) * visual(Lines)
+	fig_sin = draw(
+		plt_sin * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sines,)
+	)
+end
+
+# ╔═╡ 0a9ca99d-ff90-4846-97ea-1fee939cdb3c
+save(
+	"../results/figures/rotated_pc1_sine_waves.png", 
+	fig_sin, 
+	px_per_unit = 3
+)
+
+# ╔═╡ c00e5da1-47e7-45af-b089-18ec4fd2c48f
+constructed_sine_wave = sine_wave(
+	[7, 2*π/0.29, -1.5], 
+	[0.0, 0.0, 2.0*π/3.0, -2.0*π/3.0],
+	0.01:0.01:0.50
+)
+
+# ╔═╡ af8f0866-3ea0-48c8-8afc-81f862e02e86
+begin
+	sin_construct_4_df = DataFrame()
+	sin_construct_4_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_construct_4_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[4])
+	sin_construct_4_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_4_df[!, "Row_iden"] = ["P G R" for i in 1:length(pc_rates_reject[1,:])]
+
+	pgr_rates = predict(M, r_out_test[:,:,4])
+	
+	sin_pgr_df = DataFrame()
+	sin_pgr_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_pgr_df[!, "Rotated PC 1"] = (R[1:1,:]*pgr_rates[1:2,:])[1,:]
+	sin_pgr_df[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_reject[1,:])]
+	sin_pgr_df[!, "Row_iden"] = ["P G R" for i in 1:length(pc_rates_reject[1,:])]
+	
+	colors_sine_comparison = ["Recurrent network" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
+	
+	plt_sin_comp = data(sin_construct_4_df) * visual(Lines) + data(sin_pgr_df) * visual(Lines)
+	fig_sin_comp = draw(
+		plt_sin_comp * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 804e26e2-c98e-46da-ae21-1485b9e16589
+begin
+	rates_pgp_comp = DataFrame()
+	rates_pgp_comp[!, "time (s)"] = time_range
+	rates_pgp_comp[!, "Rotated PC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp_comp[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_pgp_comp[!, "Row_iden"] = ["P G P" for i in 1:length(pc_rates_accepted[1,:])]
+
+	sin_construct_17_df = DataFrame()
+	sin_construct_17_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_construct_17_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[17])
+	sin_construct_17_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_17_df[!, "Row_iden"] = ["P G P" for i in 1:length(pc_rates_reject[1,:])]
+	
+	plt_sin_comp_rej_17 = data(rates_pgp_comp) * visual(Lines) + data(sin_construct_17_df) * visual(Lines)
+	fg_sin_comp_rej_17 = draw(
+		plt_sin_comp_rej_17 * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 6a1d7214-7e48-4412-a1b9-2fa02c091115
+begin
+	rates_rgr_comp = DataFrame()
+	rates_rgr_comp[!, "time (s)"] = time_range
+	rates_rgr_comp[!, "Rotated PC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr_comp[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_rgr_comp[!, "Row_iden"] = ["R G R" for i in 1:length(pc_rates_accepted[1,:])]
+
+	sin_construct_23_df = DataFrame()
+	sin_construct_23_df[!, "time (s)"] = constructed_sine_wave.time
+	sin_construct_23_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[23])
+	sin_construct_23_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_23_df[!, "Row_iden"] = ["R G R" for i in 1:length(pc_rates_reject[1,:])]
+	
+	plt_sin_comp_rej_23 = data(rates_rgr_comp) * visual(Lines) + data(sin_construct_23_df) * visual(Lines)
+	fg_sin_comp_rej_23 = draw(
+		plt_sin_comp_rej_23 * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 12c461cd-d5f3-431b-a99d-a0fb75825f4d
+md"Summary figure"
+
+# ╔═╡ c9191753-436e-4d96-816b-3d1dae579152
+begin
+	plt_sin_comp_all = data(sin_construct_4_df) * visual(Lines) + data(sin_pgr_df) * visual(Lines) + data(rates_rgr_comp) * visual(Lines) + data(sin_construct_23_df) * visual(Lines) + data(rates_pgp_comp) * visual(Lines) + data(sin_construct_17_df) * visual(Lines)
+	fig_sin_comp_all = draw(
+		plt_sin_comp_all * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data", row=:"Row_iden"); 
+		palettes=(color=colors_sine_comparison,)
+	)
+end
+
+# ╔═╡ 826e2d11-c66b-4654-9134-556f104a0347
+save(
+	"../results/figures/constructed_phase_angle_computation.png", 
+	fig_sin_comp_all, 
+	px_per_unit = 3
+)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -234,10 +675,10 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
 AlgebraOfGraphics = "~0.6.14"
-CairoMakie = "~0.10.3"
+CairoMakie = "~0.10.4"
 ComponentArrays = "~0.13.8"
 DataFrames = "~1.5.0"
-Lux = "~0.4.49"
+Lux = "~0.4.50"
 MultivariateStats = "~0.10.1"
 NNlib = "~0.8.19"
 Optimisers = "~0.2.17"
@@ -252,7 +693,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.4"
 manifest_format = "2.0"
-project_hash = "4ba7e3b74f1e7792d7cfb213098430b994b23c9d"
+project_hash = "ab452ec1ca506b19a696a2f8d5f959823cb2b3f1"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -423,9 +864,9 @@ version = "1.0.5"
 
 [[deps.CairoMakie]]
 deps = ["Base64", "Cairo", "Colors", "FFTW", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "SHA", "SnoopPrecompile"]
-git-tree-sha1 = "7a6a830076a6eb2a8289e751e7237c04a1ce0ddd"
+git-tree-sha1 = "2aba202861fd2b7603beb80496b6566491229855"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.10.3"
+version = "0.10.4"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -588,9 +1029,9 @@ version = "0.3.25"
 
 [[deps.DiffEqBase]]
 deps = ["ArrayInterface", "ChainRulesCore", "DataStructures", "Distributions", "DocStringExtensions", "EnumX", "FastBroadcast", "ForwardDiff", "FunctionWrappers", "FunctionWrappersWrappers", "LinearAlgebra", "Logging", "Markdown", "MuladdMacro", "Parameters", "PreallocationTools", "Printf", "RecursiveArrayTools", "Reexport", "Requires", "SciMLBase", "Setfield", "SparseArrays", "Static", "StaticArraysCore", "Statistics", "Tricks", "TruncatedStacktraces", "ZygoteRules"]
-git-tree-sha1 = "15a24aa2414fad34136724c4a16e556f264ddd11"
+git-tree-sha1 = "117b2d02e737aeefd58cd4a4803abecadd37c8cc"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "6.122.1"
+version = "6.122.2"
 
 [[deps.DiffEqCallbacks]]
 deps = ["DataStructures", "DiffEqBase", "ForwardDiff", "LinearAlgebra", "Markdown", "NLsolve", "Parameters", "RecipesBase", "RecursiveArrayTools", "SciMLBase", "StaticArraysCore"]
@@ -628,9 +1069,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.Distributions]]
 deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "da9e1a9058f8d3eec3a8c9fe4faacfb89180066b"
+git-tree-sha1 = "13027f188d26206b9e7b863036f87d2f2e7d013a"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.86"
+version = "0.25.87"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -1252,9 +1693,9 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LinearSolve]]
 deps = ["ArrayInterface", "DocStringExtensions", "EnumX", "FastLapackInterface", "GPUArraysCore", "IterativeSolvers", "KLU", "Krylov", "KrylovKit", "LinearAlgebra", "Preferences", "RecursiveFactorization", "Reexport", "SciMLBase", "SciMLOperators", "Setfield", "SnoopPrecompile", "SparseArrays", "Sparspak", "SuiteSparse", "UnPack"]
-git-tree-sha1 = "1d3e720d603557d697fedc036bd1af43fe7b3474"
+git-tree-sha1 = "4a4f8cc7a59fadbb02d1852d1e0cef5dca3a9460"
 uuid = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
-version = "1.41.1"
+version = "1.42.0"
 
 [[deps.Loess]]
 deps = ["Distances", "LinearAlgebra", "Statistics"]
@@ -1279,9 +1720,9 @@ version = "0.12.155"
 
 [[deps.Lux]]
 deps = ["Adapt", "ChainRulesCore", "Functors", "LinearAlgebra", "LuxCUDA", "LuxCore", "LuxLib", "Markdown", "NNlib", "Optimisers", "Random", "Requires", "Setfield", "SparseArrays", "Statistics", "TruncatedStacktraces"]
-git-tree-sha1 = "31cfbf6aecc1b01e8a491e6a98663cfa08af3077"
+git-tree-sha1 = "5dafd541f5dff4c3fd01cb88c936ab8e99add84a"
 uuid = "b2108857-7c20-44ae-9111-449ecde12c47"
-version = "0.4.49"
+version = "0.4.50"
 
 [[deps.LuxCUDA]]
 deps = ["CUDA", "CUDAKernels", "NNlibCUDA", "Reexport", "cuDNN"]
@@ -1315,9 +1756,9 @@ version = "0.5.10"
 
 [[deps.Makie]]
 deps = ["Animations", "Base64", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG", "FileIO", "FixedPointNumbers", "Formatting", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "InteractiveUtils", "IntervalSets", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MakieCore", "Markdown", "Match", "MathTeXEngine", "MiniQhull", "Observables", "OffsetArrays", "Packing", "PlotUtils", "PolygonOps", "Printf", "Random", "RelocatableFolders", "Setfield", "Showoff", "SignedDistanceFields", "SnoopPrecompile", "SparseArrays", "StableHashTraits", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun"]
-git-tree-sha1 = "e7b6e3eebbadcdfd9f40ad99be84044968a562ee"
+git-tree-sha1 = "74657542dc85c3b72b8a5a9392d57713d8b7a999"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.19.3"
+version = "0.19.4"
 
 [[deps.MakieCore]]
 deps = ["Observables"]
@@ -1811,9 +2252,9 @@ version = "0.3.3"
 
 [[deps.SciMLBase]]
 deps = ["ArrayInterface", "CommonSolve", "ConstructionBase", "Distributed", "DocStringExtensions", "EnumX", "FunctionWrappersWrappers", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "Markdown", "Preferences", "RecipesBase", "RecursiveArrayTools", "Reexport", "RuntimeGeneratedFunctions", "SciMLOperators", "SnoopPrecompile", "StaticArraysCore", "Statistics", "SymbolicIndexingInterface", "Tables", "TruncatedStacktraces"]
-git-tree-sha1 = "49867ed9e315bb3604c8bb7eab27b4cd009adf8d"
+git-tree-sha1 = "392d3e28b05984496af37100ded94dc46fa6c8de"
 uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-version = "1.91.6"
+version = "1.91.7"
 
 [[deps.SciMLNLSolve]]
 deps = ["DiffEqBase", "LineSearches", "NLsolve", "Reexport", "SciMLBase"]
@@ -1994,9 +2435,9 @@ version = "1.3.0"
 
 [[deps.StatsModels]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
-git-tree-sha1 = "06a230063087c11910e9bbd17ccbf5af792a27a4"
+git-tree-sha1 = "51cdf1afd9d78552e7a08536930d7abc3b288a5c"
 uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
-version = "0.7.0"
+version = "0.7.1"
 
 [[deps.StochasticDiffEq]]
 deps = ["Adapt", "ArrayInterface", "DataStructures", "DiffEqBase", "DiffEqNoiseProcess", "DocStringExtensions", "FillArrays", "FiniteDiff", "ForwardDiff", "JumpProcesses", "LevyArea", "LinearAlgebra", "Logging", "MuladdMacro", "NLsolve", "OrdinaryDiffEq", "Random", "RandomNumbers", "RecursiveArrayTools", "Reexport", "SciMLBase", "SparseArrays", "SparseDiffTools", "StaticArrays", "UnPack"]
@@ -2338,36 +2779,63 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─1b45cd8a-cfe7-11ed-24dc-a1c5dfe6e994
-# ╟─486c7200-d918-47ee-8a65-8d698bc61e09
-# ╟─1f31c77a-5554-4f51-b4c2-7c01f963b043
-# ╟─2c7f6b4f-c8bd-4a72-9a7c-728c0dbb1f63
-# ╟─842ee6bc-9a65-48b3-afcb-ea2d13bc11cd
-# ╟─402e5461-5c4b-40bf-84ab-95be1fc219e9
-# ╟─9fda22ce-e481-45b2-b9ae-84639a88a655
-# ╠═30e0e0f1-b4da-4eff-b4c4-913ba546d831
-# ╠═440b365c-858b-4f42-8b55-3b2a40097734
-# ╠═0fb1c248-f228-40d9-9bdd-f7e6bc7dd0cd
-# ╠═eb9babfb-1390-43c1-929e-f8d726aa649e
-# ╟─7563f413-ea07-4e41-8381-a22a45b8410b
-# ╠═96f315e3-428e-4bf3-a206-58573ce6204e
-# ╟─a1d043d0-5bb1-4147-9911-5c711bf0da6f
-# ╠═87ad1e54-95c1-4774-883f-f80cee036b28
-# ╟─37ccbba2-861b-46dd-a25d-1068ad7e124a
-# ╟─14cdf7d2-e840-4b90-afe7-c24e21f38357
-# ╟─b0316255-000c-448f-a25c-ffa3a23c405e
-# ╟─95b45cf6-2ecc-4161-afc9-dca24fa29c9f
-# ╟─acd468ca-3d9e-44fb-afcc-4ce6bbb978f2
-# ╟─61615ec6-7032-4f77-b2db-8b22b8c2c0d2
-# ╠═6077af0b-1833-46f4-8c68-2a5b7a23c69d
-# ╟─f2977d62-4b44-44de-9cd1-a7ecfadc0423
-# ╟─89518552-0c8c-4fad-8cf1-2a79f70e3d34
-# ╠═7b8f283b-4a39-443b-b7cc-300301db3c46
-# ╠═22e0610d-b673-4a25-8a99-341235eed758
-# ╟─c14800f8-4c67-44b0-8b0a-3b3bf1e4bc47
-# ╠═bed99a57-ed0f-455b-9df1-610a3b3c8934
-# ╟─c9c845db-7d0e-401b-9e84-46503b9c732d
-# ╟─c8a90012-1cd5-4846-a04e-a40c3f63d359
-# ╟─5e6cf0cd-4581-4a5e-aa54-08ef9e76d672
+# ╟─3f8029b8-d445-11ed-24c0-d79618051cb9
+# ╟─924643fb-7ecd-481c-8660-09c40122096d
+# ╟─3e8c41ed-bdc3-45a9-8abd-373752994ef3
+# ╠═6130333a-fd35-40da-9b07-8eb0211a2287
+# ╟─a21b9b68-f97f-4961-94b4-739105528e4a
+# ╠═de2ce18f-63d9-4ff6-82e8-7b25ddef28fe
+# ╟─3a59d3fa-23cf-439f-be84-a93d2c074df9
+# ╠═e72dff62-f28d-4d3a-9864-f8b7588cec47
+# ╠═c05c2be9-6954-4efd-905d-7625f1db51a9
+# ╠═da919f4f-ecc2-4afc-976e-35cdcb240b90
+# ╟─31483b23-3904-400c-9e4e-892a308b2847
+# ╠═0f1ab940-1701-4da7-ae07-ce0555225c5b
+# ╠═283f832b-5183-4869-8b19-1a76525fa0df
+# ╟─534dd493-503b-4c91-8f9e-13b7f0031de4
+# ╟─cdf390eb-9780-46f6-8adf-5e595e4e1786
+# ╟─313a3d11-ca98-46e6-b59a-9df0ee9134c3
+# ╟─cc2d4643-667b-4c11-a666-4dc99e4762f0
+# ╠═a401b611-bc1a-46e5-b426-3df277c53861
+# ╟─10488006-8c27-44d5-a597-aa652f34c5d2
+# ╟─9512bf14-ffe8-44bd-8642-fada6053032f
+# ╟─ce1396be-de81-4402-b8a1-ef59056aa89b
+# ╠═a0dfcf84-5351-4e46-9366-aac27a721553
+# ╟─d101c7c2-84a7-4f02-815e-cd16925fbf73
+# ╟─f41d4286-7807-4077-ab17-1e898de41633
+# ╟─244c5a30-05f0-4539-947a-f573261396f1
+# ╟─3d09d055-304e-44c2-9a6f-97d4ba33006d
+# ╠═9dbbafa4-2a02-4731-8ccf-0a17af68feee
+# ╟─14431077-82aa-4e82-8e06-6689a722ce8a
+# ╟─8b8cacfd-ae08-4723-814d-0fadccdee144
+# ╟─6981238a-461c-45e0-992e-ab7bfc5e5452
+# ╟─a9522038-d4cb-4c5f-ae04-6a6e9bc3a63f
+# ╟─a1e2f6cc-0251-43b7-b191-3323f71007d3
+# ╟─3b784583-5555-4750-aa47-eeee7adf06c0
+# ╟─e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
+# ╟─48157dd9-99d0-4833-8d21-a4d277ffe063
+# ╟─03b00181-a2f7-42d8-91c0-3b6318a42664
+# ╟─0a156e28-302e-4d7e-80e4-d91ddcfc0ca9
+# ╟─c80933e9-0a97-42dd-8969-19c06bc2b074
+# ╟─53152ffc-4d3f-483b-b673-4b8309266a04
+# ╠═47d56bf2-d45e-40d7-8df9-f81a7a2c5890
+# ╟─f8f265f3-d4a5-4768-94b5-8be192cdb2e3
+# ╟─73e8636c-887d-44dc-85d3-7469bceea418
+# ╟─2b1bc0ca-12f8-49fe-bc90-5cd2954290ab
+# ╟─0bce1289-bd80-4375-87d0-435ea37487a6
+# ╟─181204e1-efe0-4d76-9f4d-8750cab63c9d
+# ╟─3ff9f145-05c9-42d4-aa81-854520a14a6d
+# ╟─491243b4-aea5-4e6c-a3f8-4d185658d8e8
+# ╟─b723357c-dee5-4ceb-b9a7-f8940ec09e3b
+# ╠═fd16f5ac-1091-484c-bb1d-4ac46c38a85c
+# ╟─284f0c5f-ba19-4ee2-b139-9ebfdd8c130a
+# ╟─0a9ca99d-ff90-4846-97ea-1fee939cdb3c
+# ╠═c00e5da1-47e7-45af-b089-18ec4fd2c48f
+# ╟─af8f0866-3ea0-48c8-8afc-81f862e02e86
+# ╟─804e26e2-c98e-46da-ae21-1485b9e16589
+# ╟─6a1d7214-7e48-4412-a1b9-2fa02c091115
+# ╟─12c461cd-d5f3-431b-a99d-a0fb75825f4d
+# ╟─c9191753-436e-4d96-816b-3d1dae579152
+# ╟─826e2d11-c66b-4654-9134-556f104a0347
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
