@@ -602,9 +602,9 @@ version = "0.1.2"
 
 [[deps.CUDA_Runtime_jll]]
 deps = ["Artifacts", "CUDA_Driver_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "d555cffbab63bb33401ab2cc6445d17dd38c305c"
+git-tree-sha1 = "ed00f777d2454c45f5f49634ed0a589da07ee0b0"
 uuid = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
-version = "0.2.4+0"
+version = "0.2.4+1"
 
 [[deps.CUDNN_jll]]
 deps = ["Artifacts", "CUDA_Runtime_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]

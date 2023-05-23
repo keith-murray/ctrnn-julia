@@ -70,7 +70,7 @@ begin
 end
 
 # ╔═╡ 283f832b-5183-4869-8b19-1a76525fa0df
-save("../results/BDA_figures/example_trial.png", fg_SET, px_per_unit = 3)
+save("../results/figures/example_trial.png", fg_SET, px_per_unit = 3)
 
 # ╔═╡ 534dd493-503b-4c91-8f9e-13b7f0031de4
 md"## Load model"
@@ -108,7 +108,7 @@ begin
 end
 
 # ╔═╡ 10488006-8c27-44d5-a597-aa652f34c5d2
-save("../results/BDA_figures/loss_curve.png", fg_draw, px_per_unit = 3)
+save("../results/figures/loss_curve.png", fg_draw, px_per_unit = 3)
 
 # ╔═╡ 9512bf14-ffe8-44bd-8642-fada6053032f
 md"## View example outputs"
@@ -175,7 +175,7 @@ begin
 end
 
 # ╔═╡ f41d4286-7807-4077-ab17-1e898de41633
-save("../results/BDA_figures/SET_examples.png", fg_SET_example, px_per_unit = 3)
+save("../results/figures/SET_examples.png", fg_SET_example, px_per_unit = 3)
 
 # ╔═╡ 244c5a30-05f0-4539-947a-f573261396f1
 md"## View PCA trajectories"
@@ -233,7 +233,7 @@ md"Woah. Just woah. This is beautiful. There is beauty in science."
 
 # ╔═╡ 6981238a-461c-45e0-992e-ab7bfc5e5452
 begin
-	save("../results/BDA_figures/pca_summary.png", fg_avg_test, px_per_unit = 3)
+	save("../results/figures/pca_summary.png", fg_avg_test, px_per_unit = 3)
 end
 
 # ╔═╡ a9522038-d4cb-4c5f-ae04-6a6e9bc3a63f
@@ -281,7 +281,7 @@ end
 
 # ╔═╡ e8cee8e9-2bdb-4876-bdf7-4ff5c852804a
 save(
-	"../results/BDA_figures/pca_accepted_summary.png", 
+	"../results/figures/pca_accepted_summary.png", 
 	fg_pc_accepted, 
 	px_per_unit = 3
 )
@@ -326,7 +326,7 @@ end
 
 # ╔═╡ 03b00181-a2f7-42d8-91c0-3b6318a42664
 save(
-	"../results/BDA_figures/pca_accepted_2D_summary.png", 
+	"../results/figures/pca_accepted_2D_summary.png", 
 	fg_pc_accepted_2d, 
 	px_per_unit = 3
 )
@@ -364,7 +364,7 @@ end
 
 # ╔═╡ c80933e9-0a97-42dd-8969-19c06bc2b074
 save(
-	"../results/BDA_figures/pca_rejected_summary.png", 
+	"../results/figures/pca_rejected_summary.png", 
 	fg_pc_reject, 
 	px_per_unit = 3
 )
@@ -406,7 +406,7 @@ end
 
 # ╔═╡ 73e8636c-887d-44dc-85d3-7469bceea418
 save(
-	"../results/BDA_figures/rotated_pc1_pc2_training.png", 
+	"../results/figures/rotated_pc1_pc2_training.png", 
 	fg_avg_test_r, 
 	px_per_unit = 3
 )
@@ -457,7 +457,7 @@ end
 
 # ╔═╡ 0bce1289-bd80-4375-87d0-435ea37487a6
 save(
-	"../results/BDA_figures/rotated_pc1_accepted.png", 
+	"../results/figures/rotated_pc1_accepted.png", 
 	fg_rotated_pc_example, 
 	px_per_unit = 3
 )
@@ -494,16 +494,13 @@ end
 
 # ╔═╡ 3ff9f145-05c9-42d4-aa81-854520a14a6d
 save(
-	"../results/BDA_figures/rotated_pc1_rejected.png", 
+	"../results/figures/rotated_pc1_rejected.png", 
 	fg_rotated_pc_rej, 
 	px_per_unit = 3
 )
 
 # ╔═╡ 491243b4-aea5-4e6c-a3f8-4d185658d8e8
 md"Green colors do not perturb the cycle. Purple colors add 2/3 pi radians to the cycle. Red colors subract 2/3 pi radians to the cycle."
-
-# ╔═╡ 8ae57eaf-a8eb-42eb-99ac-e775fb124992
-
 
 # ╔═╡ b723357c-dee5-4ceb-b9a7-f8940ec09e3b
 md"## Model cycles"
@@ -559,7 +556,7 @@ end
 
 # ╔═╡ 0a9ca99d-ff90-4846-97ea-1fee939cdb3c
 save(
-	"../results/BDA_figures/rotated_pc1_sine_waves.png", 
+	"../results/figures/rotated_pc1_sine_waves.png", 
 	fig_sin, 
 	px_per_unit = 3
 )
@@ -652,7 +649,7 @@ end
 
 # ╔═╡ 826e2d11-c66b-4654-9134-556f104a0347
 save(
-	"../results/BDA_figures/constructed_phase_angle_computation.png", 
+	"../results/figures/constructed_phase_angle_computation.png", 
 	fig_sin_comp_all, 
 	px_per_unit = 3
 )
@@ -2829,7 +2826,6 @@ version = "3.5.0+0"
 # ╟─181204e1-efe0-4d76-9f4d-8750cab63c9d
 # ╟─3ff9f145-05c9-42d4-aa81-854520a14a6d
 # ╟─491243b4-aea5-4e6c-a3f8-4d185658d8e8
-# ╠═8ae57eaf-a8eb-42eb-99ac-e775fb124992
 # ╟─b723357c-dee5-4ceb-b9a7-f8940ec09e3b
 # ╠═fd16f5ac-1091-484c-bb1d-4ac46c38a85c
 # ╟─284f0c5f-ba19-4ee2-b139-9ebfdd8c130a
