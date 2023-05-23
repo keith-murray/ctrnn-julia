@@ -50,11 +50,13 @@ function printUpdates(epoch, epochs, ttime, current_results)
     println("[$epoch/$epochs] \t Time $(round(ttime; digits=2))s \t Train Accuracy: " * "$(round(current_results[3] * 100; digits=2))% \t " * "Test Accuracy: $(round(current_results[4] * 100; digits=2))%")
 end
 
-function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, IC::Vector{Float32}, training_data, testing_data, L2_mag::Float32, AR_mag::Float32, lr::Float32)	
+function train(rng::AbstractRNG, batch::Int64, epochs::Int64, model, ps, st, training_data, testing_data, L2_mag::Float32, AR_mag::Float32, lr::Float32)	
     opt = Optimisers.OptimiserChain(Optimisers.ClipGrad(5.0), Optimisers.AdamW(lr, (9f-1, 9.99f-1), L2_mag))
     st_opt = Optimisers.setup(opt, ps)
     loss = construct_loss(AR_mag)
     accuracies = Lux.zeros32(rng, 4, epochs+1)
+    IC = Lux.ones32(rng, 100)
+
 
     ### Warmup the Model
     stime = time()
