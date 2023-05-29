@@ -15,10 +15,10 @@ begin
 end
 
 # ╔═╡ 3f8029b8-d445-11ed-24c0-d79618051cb9
-md"# Generate BDA Figures"
+md"# Generate Figures"
 
 # ╔═╡ 924643fb-7ecd-481c-8660-09c40122096d
-md"The purpose of this notebook is to generate the figures used in our submission to the Biological Distributed Algorithms (BDA) workshop."
+md"The purpose of this notebook is to generate the figures used in our latest submission."
 
 # ╔═╡ 3e8c41ed-bdc3-45a9-8abd-373752994ef3
 md"## Setup"
@@ -2790,22 +2790,22 @@ version = "3.5.0+0"
 # ╠═c05c2be9-6954-4efd-905d-7625f1db51a9
 # ╠═da919f4f-ecc2-4afc-976e-35cdcb240b90
 # ╟─31483b23-3904-400c-9e4e-892a308b2847
-# ╠═0f1ab940-1701-4da7-ae07-ce0555225c5b
-# ╠═283f832b-5183-4869-8b19-1a76525fa0df
+# ╟─0f1ab940-1701-4da7-ae07-ce0555225c5b
+# ╟─283f832b-5183-4869-8b19-1a76525fa0df
 # ╟─534dd493-503b-4c91-8f9e-13b7f0031de4
 # ╟─cdf390eb-9780-46f6-8adf-5e595e4e1786
 # ╟─313a3d11-ca98-46e6-b59a-9df0ee9134c3
 # ╟─cc2d4643-667b-4c11-a666-4dc99e4762f0
-# ╠═a401b611-bc1a-46e5-b426-3df277c53861
+# ╟─a401b611-bc1a-46e5-b426-3df277c53861
 # ╟─10488006-8c27-44d5-a597-aa652f34c5d2
 # ╟─9512bf14-ffe8-44bd-8642-fada6053032f
 # ╟─ce1396be-de81-4402-b8a1-ef59056aa89b
-# ╠═a0dfcf84-5351-4e46-9366-aac27a721553
+# ╟─a0dfcf84-5351-4e46-9366-aac27a721553
 # ╟─d101c7c2-84a7-4f02-815e-cd16925fbf73
 # ╟─f41d4286-7807-4077-ab17-1e898de41633
 # ╟─244c5a30-05f0-4539-947a-f573261396f1
 # ╟─3d09d055-304e-44c2-9a6f-97d4ba33006d
-# ╠═9dbbafa4-2a02-4731-8ccf-0a17af68feee
+# ╟─9dbbafa4-2a02-4731-8ccf-0a17af68feee
 # ╟─14431077-82aa-4e82-8e06-6689a722ce8a
 # ╟─8b8cacfd-ae08-4723-814d-0fadccdee144
 # ╟─6981238a-461c-45e0-992e-ab7bfc5e5452
