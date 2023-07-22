@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.19)  23 MAY 2023 01:01
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.19)  21 JUL 2023 18:52
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -330,33 +330,36 @@ File: hypothesis.png Graphic file (type png)
 <use hypothesis.png>
 Package pdftex.def Info: hypothesis.png  used on input line 106.
 (pdftex.def)             Requested size: 125.50859pt x 133.81961pt.
+
+Underfull \vbox (badness 1342) has occurred while \output is active []
+
 <SET_examples.png, id=25, 2409.0pt x 1806.75pt>
 File: SET_examples.png Graphic file (type png)
 <use SET_examples.png>
 Package pdftex.def Info: SET_examples.png  used on input line 122.
 (pdftex.def)             Requested size: 240.91411pt x 180.68558pt.
-<pca_summary.png, id=26, 2409.0pt x 1806.75pt>
+ [3 <./hypothesis.png> <./SET_examples.png>]
+<pca_summary.png, id=31, 2409.0pt x 1806.75pt>
 File: pca_summary.png Graphic file (type png)
 <use pca_summary.png>
 Package pdftex.def Info: pca_summary.png  used on input line 134.
 (pdftex.def)             Requested size: 240.91411pt x 180.68558pt.
-<rotated_pc1_accepted.png, id=27, 2409.0pt x 1806.75pt>
+<rotated_pc1_accepted.png, id=32, 2409.0pt x 1806.75pt>
 File: rotated_pc1_accepted.png Graphic file (type png)
 <use rotated_pc1_accepted.png>
 Package pdftex.def Info: rotated_pc1_accepted.png  used on input line 144.
 (pdftex.def)             Requested size: 240.91411pt x 180.68558pt.
- [3 <./hypothesis.png> <./SET_examples.png>]
 <resulting_FSA.png, id=33, 1006.4802pt x 917.3472pt>
 File: resulting_FSA.png Graphic file (type png)
 <use resulting_FSA.png>
 Package pdftex.def Info: resulting_FSA.png  used on input line 154.
 (pdftex.def)             Requested size: 125.80971pt x 114.6681pt.
-<rotated_pc1_rejected.png, id=34, 2409.0pt x 1806.75pt>
+ [4 <./pca_summary.png> <./rotated_pc1_accepted.png> <./resulting_FSA.png>]
+<rotated_pc1_rejected.png, id=38, 2409.0pt x 1806.75pt>
 File: rotated_pc1_rejected.png Graphic file (type png)
 <use rotated_pc1_rejected.png>
 Package pdftex.def Info: rotated_pc1_rejected.png  used on input line 164.
 (pdftex.def)             Requested size: 240.91411pt x 180.68558pt.
- [4 <./pca_summary.png> <./rotated_pc1_accepted.png> <./resulting_FSA.png>]
 <constructed_phase_angle_computation.png, id=39, 2409.0pt x 1806.75pt>
 File: constructed_phase_angle_computation.png Graphic file (type png)
 <use constructed_phase_angle_computation.png>
@@ -364,17 +367,18 @@ Package pdftex.def Info: constructed_phase_angle_computation.png  used on input
  line 184.
 (pdftex.def)             Requested size: 240.91411pt x 180.68558pt.
  [5 <./rotated_pc1_rejected.png> <./constructed_phase_angle_computation.png>]
-Underfull \hbox (badness 4353) in paragraph at lines 223--224
+Underfull \hbox (badness 4353) in paragraph at lines 228--229
 []\OT1/ptm/m/n/8 A. Pal, ``Lux: Ex-plicit Pa-ram-e-ter-i-za-tion of Deep Neu-ra
 l Net-
  []
 
 
-Underfull \hbox (badness 4872) in paragraph at lines 223--224
+Underfull \hbox (badness 4872) in paragraph at lines 228--229
 \OT1/ptm/m/n/8 works in Ju-lia,'' GitHub repos-i-tory, 2022, [On-line]. Avail-a
 ble:
  []
 
+[6]
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -386,33 +390,35 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[6] (./conference_101719.aux) ) 
+[7
+
+] (./conference_101719.aux) ) 
 Here is how much of TeX's memory you used:
- 4310 strings out of 476025
- 68141 string characters out of 5790017
- 1868388 words of memory out of 5000000
- 24718 multiletter control sequences out of 15000+600000
+ 4314 strings out of 476025
+ 68213 string characters out of 5790017
+ 1873388 words of memory out of 5000000
+ 24722 multiletter control sequences out of 15000+600000
  555779 words of font info for 119 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 57i,11n,62p,1131b,333s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2023/texmf-dist/fonts/type1/
-public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/pu
-blic/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmr10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmr7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmr8.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmsy10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmsy7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmsy8.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/urw/times/utmb8a.pf
-b></usr/local/texlive/2023/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/l
-ocal/texlive/2023/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texli
-ve/2023/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on conference_101719.pdf (6 pages, 1740431 bytes).
+ 57i,11n,62p,1452b,333s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2023/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmex10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/publ
+ic/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmr7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmr8.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmsy10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmsy7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmsy8.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/urw/times/utmb8a.pfb>
+</usr/local/texlive/2023/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/loc
+al/texlive/2023/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive
+/2023/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on conference_101719.pdf (7 pages, 1742388 bytes).
 PDF statistics:
- 105 PDF objects out of 1000 (max. 8388607)
- 58 compressed objects within 1 object stream
+ 110 PDF objects out of 1000 (max. 8388607)
+ 62 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  41 words of extra memory for PDF output out of 10000 (max. 10000000)
 

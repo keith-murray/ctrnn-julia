@@ -1,40 +1,44 @@
 \relax 
-\citation{Inhelder1964-INHTEG}
-\citation{sussillo2013opening,mante2013context,driscoll2022flexible,kay2022neural}
+\citation{inhelder1964early}
+\citation{bishop2006pattern,lecun2015deep}
+\citation{sussillo2013opening,mante2013context,driscoll2022flexible,kay2022neural,pals2023trained}
 \citation{driscoll2022flexible}
 \citation{strogatz2018nonlinear}
 \citation{kay2022neural}
 \citation{kay2022neural}
 \citation{driscoll2022flexible}
 \citation{kay2022neural}
-\citation{gordon2017joy}
+\citation{sussillo2015neural,cueva2018emergence}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {II}Background}{1}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Dynamical motifs in RNNs}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Dynamical motifs for transitive inference}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Why do interpretable dynamical motifs emerge?}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Dynamical mechanisms for transitive inference}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Why do interpretable dynamical mechanisms emerge?}{1}{}\protected@file@percent }
 \newlabel{interpretablemotifs}{{\mbox  {II-C}}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {III}Methodology}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Task}{1}{}\protected@file@percent }
-\newlabel{taskmethod}{{\mbox  {III-A}}{1}}
+\citation{bishop2006pattern,lecun2015deep}
+\citation{gordon2017joy}
+\citation{gordon2017joy}
 \citation{kay2022neural}
 \citation{richards2019deep}
 \citation{bezanson2017julia}
 \citation{pal2022lux}
 \citation{rackauckas2017differentialequations,rackauckas2020universal}
 \citation{loshchilov2017decoupled}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Task}{2}{}\protected@file@percent }
+\newlabel{taskmethod}{{\mbox  {III-A}}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Model}{2}{}\protected@file@percent }
+\newlabel{ctrnnmodel}{{\mbox  {III-B}}{2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces A sample trial showing the colors purple, green, and red being presented. This trial constitutes a valid set.}}{2}{}\protected@file@percent }
+\newlabel{trial}{{1}{2}}
 \citation{sussillo2013opening,mante2013context,driscoll2022flexible,kay2022neural}
 \citation{langdon2022latent}
 \citation{b27}
 \citation{chaisangmongkon2017computing}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces A sample trial showing the colors purple, green, and red being presented. This trial constitutes a valid pattern.}}{2}{}\protected@file@percent }
-\newlabel{trial}{{1}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Model}{2}{}\protected@file@percent }
-\newlabel{ctrnnmodel}{{\mbox  {III-B}}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Analysis}{2}{}\protected@file@percent }
-\newlabel{analysismodel}{{\mbox  {III-C}}{2}}
 \citation{tivno1998finite}
 \citation{strogatz2018nonlinear}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Analysis}{3}{}\protected@file@percent }
+\newlabel{analysismodel}{{\mbox  {III-C}}{3}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces An illustration of our hypothesized low-dimensional, learned representation in the form of a hexagonal fixed-point network. Filled fixed points represent accepted patterns, while empty ones denote rejected patterns. Note that all transitions triggered by a specific color stimulus maintain a consistent directionality. The architecture of this network allows for linear segregation of accepting and rejecting fixed points in PC 3, simplifying classification tasks.}}{3}{}\protected@file@percent }
 \newlabel{hypothesisFSA}{{2}{3}}
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Results}{3}{}\protected@file@percent }
@@ -48,47 +52,51 @@
 \newlabel{pcaacceptedsets}{{5}{4}}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces This figure depicts the updated FSA that represents the underlying dynamics and computation of our trained model. The model begins at a phase angle of $0$ degrees, and stimulus presentations trigger transitions to other nodes, each representing a distinct phase angle.}}{4}{}\protected@file@percent }
 \newlabel{resultingfsa}{{6}{4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Simplifying the model}{4}{}\protected@file@percent }
-\newlabel{simpmodel}{{5}{4}}
 \citation{b26}
 \citation{mante2013context}
 \citation{chaisangmongkon2017computing}
 \citation{driscoll2022flexible}
 \citation{jaeger2021towards}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces This figure illustrates the projected trajectories of several invalid patterns onto the rotated PC 1. The depicted trajectories confirm the model's behavior according to our updated FSA, validating our predictions about the final phase for different stimulus sequences.}}{5}{}\protected@file@percent }
+\newlabel{pcarejectedsets}{{7}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Simplifying the model}{5}{}\protected@file@percent }
+\newlabel{simpmodel}{{5}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces This figure illustrates three examples of the trajectories of our simplified model in comparison to the rotated PC 1 of the full model. The top row displays both models in a purple, green, purple trial. The middle row shows both models in a purple, green, red trial. The bottom row represents both models in a red, green, red trial.}}{5}{}\protected@file@percent }
+\newlabel{constructedmodel}{{8}{5}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Discussion}{5}{}\protected@file@percent }
 \citation{hoppensteadt1999oscillatory}
 \citation{pals2023trained}
 \citation{hoppensteadt1999oscillatory}
 \citation{pals2023trained}
 \citation{langdon2022latent}
 \citation{b28}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces This figure illustrates the projected trajectories of several invalid patterns onto the rotated PC 1. The depicted trajectories confirm the model's behavior according to our updated FSA, validating our predictions about the final phase for different stimulus sequences.}}{5}{}\protected@file@percent }
-\newlabel{pcarejectedsets}{{7}{5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces This figure illustrates three examples of the trajectories of our simplified model in comparison to the rotated PC 1 of the full model. The top row displays both models in a purple, green, purple trial. The middle row shows both models in a purple, green, red trial. The bottom row represents both models in a red, green, red trial.}}{5}{}\protected@file@percent }
-\newlabel{constructedmodel}{{8}{5}}
-\@writefile{toc}{\contentsline {section}{\numberline {V}Discussion}{5}{}\protected@file@percent }
 \citation{nanda2023progress}
-\bibcite{Inhelder1964-INHTEG}{1}
-\bibcite{sussillo2013opening}{2}
-\bibcite{mante2013context}{3}
-\bibcite{driscoll2022flexible}{4}
-\bibcite{kay2022neural}{5}
-\bibcite{strogatz2018nonlinear}{6}
-\bibcite{gordon2017joy}{7}
-\bibcite{richards2019deep}{8}
-\bibcite{bezanson2017julia}{9}
-\bibcite{pal2022lux}{10}
-\bibcite{rackauckas2020universal}{11}
-\bibcite{rackauckas2017differentialequations}{12}
-\bibcite{loshchilov2017decoupled}{13}
-\bibcite{langdon2022latent}{14}
-\bibcite{b27}{15}
-\bibcite{chaisangmongkon2017computing}{16}
-\bibcite{tivno1998finite}{17}
-\bibcite{b26}{18}
-\bibcite{jaeger2021towards}{19}
-\bibcite{hoppensteadt1999oscillatory}{20}
-\bibcite{pals2023trained}{21}
-\bibcite{b28}{22}
-\bibcite{nanda2023progress}{23}
+\bibcite{inhelder1964early}{1}
+\bibcite{bishop2006pattern}{2}
+\bibcite{lecun2015deep}{3}
+\bibcite{sussillo2013opening}{4}
+\bibcite{mante2013context}{5}
+\bibcite{driscoll2022flexible}{6}
+\bibcite{kay2022neural}{7}
+\bibcite{pals2023trained}{8}
+\bibcite{sussillo2015neural}{9}
+\bibcite{cueva2018emergence}{10}
+\bibcite{strogatz2018nonlinear}{11}
+\bibcite{gordon2017joy}{12}
+\bibcite{richards2019deep}{13}
+\bibcite{bezanson2017julia}{14}
+\bibcite{pal2022lux}{15}
+\bibcite{rackauckas2020universal}{16}
+\bibcite{rackauckas2017differentialequations}{17}
+\bibcite{loshchilov2017decoupled}{18}
+\bibcite{langdon2022latent}{19}
+\bibcite{b27}{20}
+\bibcite{chaisangmongkon2017computing}{21}
+\bibcite{tivno1998finite}{22}
+\bibcite{b26}{23}
+\bibcite{jaeger2021towards}{24}
+\bibcite{hoppensteadt1999oscillatory}{25}
+\bibcite{b28}{26}
 \@writefile{toc}{\contentsline {section}{References}{6}{}\protected@file@percent }
-\gdef \@abspage@last{6}
+\bibcite{nanda2023progress}{27}
+\gdef \@abspage@last{7}
