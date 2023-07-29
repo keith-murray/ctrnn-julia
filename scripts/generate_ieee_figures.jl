@@ -62,9 +62,9 @@ begin
 	SET_amplitude_matrix = input_to_mat(reduce(vcat, testing_input_funcs[4].(display_time)), display_time)
 	df_SET = DataFrame()
 	df_SET[!, "time (s)"] = vcat(display_time, display_time, display_time)
-	df_SET[!, "Stimulus impulse"] = vcat(SET_amplitude_matrix[1,:], SET_amplitude_matrix[2,:], SET_amplitude_matrix[3,:])
-	df_SET[!, "Color values"] = vcat(["Green" for i in 1:length(display_time)], ["Purple" for i in 1:length(display_time)],["Red" for i in 1:length(display_time)])
-	plt_SET = data(df_SET) * mapping(:"time (s)", :"Stimulus impulse"; color=:"Color values") * visual(Lines)
+	df_SET[!, "Color input"] = vcat(SET_amplitude_matrix[1,:], SET_amplitude_matrix[2,:], SET_amplitude_matrix[3,:])
+	df_SET[!, "Color"] = vcat(["Green" for i in 1:length(display_time)], ["Purple" for i in 1:length(display_time)],["Red" for i in 1:length(display_time)])
+	plt_SET = data(df_SET) * mapping(:"time (s)", :"Color input"; color=:"Color") * visual(Lines)
 	colors_SET = ["Green" => colorant"#5CD629", "Purple" => colorant"#662BF0", "Red" => colorant"#DA3A32"]
 	fg_SET = draw(plt_SET; palettes=(color=colors_SET,))
 end
@@ -150,14 +150,14 @@ begin
 						 y_out_test[1,:,SET_reject_num],
 						 y_out_blank[1,:,1],
 		),
-		row_iden = vcat(["Accepted stimulus" for i in 1:(4*length(time_range))],
-						["Rejected stimulus" for i in 1:(4*length(time_range))],
-						["No stimulus" for i in 1:length(time_range)],
+		row_iden = vcat(["Valid set" for i in 1:(4*length(time_range))],
+						["Invalid set" for i in 1:(4*length(time_range))],
+						["No stimuli" for i in 1:length(time_range)],
 		),
 	)
 	
 	df_example_outputs[!, "time (s)"] = vcat(time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range, time_range)
-	df_example_outputs[!, "Type of signal"] = vcat(
+	df_example_outputs[!, "Signal"] = vcat(
 		["Green" for i in 1:length(time_range)], 
 		["Purple" for i in 1:length(time_range)],
 		["Red" for i in 1:length(time_range)],
@@ -169,7 +169,7 @@ begin
 		["Output" for i in 1:length(time_range)],
 	)
 	
-	plt_SET_example = data(df_example_outputs) * mapping(:"time (s)", :Amplitude; color=:"Type of signal", row=:row_iden) * visual(Lines)
+	plt_SET_example = data(df_example_outputs) * mapping(:"time (s)", :Amplitude; color=:"Signal", row=:row_iden) * visual(Lines)
 	colors_SET_example = ["Green" => colorant"#5CD629", "Purple" => colorant"#662BF0", "Red" => colorant"#DA3A32", "Output" => colorant"#F0B72B"]
 	fg_SET_example = draw(plt_SET_example; palettes=(color=colors_SET_example,))
 end
@@ -209,18 +209,18 @@ begin
 	df_train_accept = DataFrame()
 	df_train_accept[!, "PC 1"] = accept_pc_1_2[1,:]
 	df_train_accept[!, "PC 2"] = accept_pc_1_2[2,:]
-	df_train_accept[!, "Data"] = ["Accepted stimulus" for i in 1:length(accept_pc_1_2[2,:])]
+	df_train_accept[!, "Data"] = ["Valid set" for i in 1:length(accept_pc_1_2[2,:])]
 
 	df_train_reject = DataFrame()
 	df_train_reject[!, "PC 1"] = reject_pc_1_2[1,:]
 	df_train_reject[!, "PC 2"] = reject_pc_1_2[2,:]
-	df_train_reject[!, "Data"] = ["Rejected stimulus" for i in 1:length(reject_pc_1_2[2,:])]
+	df_train_reject[!, "Data"] = ["Invalid set" for i in 1:length(reject_pc_1_2[2,:])]
 	
 	plt_avg_test = data(df_avg_train) * visual(Lines) + data(df_train_accept) * visual(Scatter) + data(df_train_reject) * visual(Scatter)
 	colors_avg_test = [
 		"No stimulus PCA trajectory" => colorant"#662BF0",
-		"Accepted stimulus" => colorant"#5CD629",
-		"Rejected stimulus" => colorant"#DA3A32"
+		"Valid set" => colorant"#5CD629",
+		"Invalid set" => colorant"#DA3A32"
 	]
 	fg_avg_test = draw(
 		plt_avg_test * mapping(:"PC 1", :"PC 2"; color=:"Data"); 
@@ -383,23 +383,23 @@ end
 # ╔═╡ f8f265f3-d4a5-4768-94b5-8be192cdb2e3
 begin
 	df_avg_train_r = DataFrame()
-	df_avg_train_r[!, "Rotated PC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
-	df_avg_train_r[!, "Rotated PC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
+	df_avg_train_r[!, "rPC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
+	df_avg_train_r[!, "rPC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
 	df_avg_train_r[!, "Data"] = ["No stimulus PCA trajectory" for i in 1:length(blank_pc_1_2[2,:])]
 
 	df_train_accept_r = DataFrame()
-	df_train_accept_r[!, "Rotated PC 1"] = (R[1:1,:]*accept_pc_1_2[1:2,:])[1,:]
-	df_train_accept_r[!, "Rotated PC 2"] = (R[2:2,:]*accept_pc_1_2[1:2,:])[1,:]
-	df_train_accept_r[!, "Data"] = ["Accepted stimulus" for i in 1:length(accept_pc_1_2[2,:])]
+	df_train_accept_r[!, "rPC 1"] = (R[1:1,:]*accept_pc_1_2[1:2,:])[1,:]
+	df_train_accept_r[!, "rPC 2"] = (R[2:2,:]*accept_pc_1_2[1:2,:])[1,:]
+	df_train_accept_r[!, "Data"] = ["Valid set" for i in 1:length(accept_pc_1_2[2,:])]
 
 	df_train_reject_r = DataFrame()
-	df_train_reject_r[!, "Rotated PC 1"] = (R[1:1,:]*reject_pc_1_2[1:2,:])[1,:]
-	df_train_reject_r[!, "Rotated PC 2"] = (R[2:2,:]*reject_pc_1_2[1:2,:])[1,:]
-	df_train_reject_r[!, "Data"] = ["Rejected stimulus" for i in 1:length(reject_pc_1_2[2,:])]
+	df_train_reject_r[!, "rPC 1"] = (R[1:1,:]*reject_pc_1_2[1:2,:])[1,:]
+	df_train_reject_r[!, "rPC 2"] = (R[2:2,:]*reject_pc_1_2[1:2,:])[1,:]
+	df_train_reject_r[!, "Data"] = ["Invalid set" for i in 1:length(reject_pc_1_2[2,:])]
 	
 	plt_avg_test_r = data(df_avg_train_r) * visual(Lines) + data(df_train_accept_r) * visual(Scatter) + data(df_train_reject_r) * visual(Scatter)
 	fg_avg_test_r = draw(
-		plt_avg_test_r * mapping(:"Rotated PC 1", :"Rotated PC 2"; color=:"Data"); 
+		plt_avg_test_r * mapping(:"rPC 1", :"rPC 2"; color=:"Data"); 
 		palettes=(color=colors_avg_test,)
 	)
 end
@@ -419,38 +419,38 @@ begin
 
 	rates_accepted_ggg = DataFrame()
 	rates_accepted_ggg[!, "time (s)"] = time_range
-	rates_accepted_ggg[!, "Rotated PC 1"] = (R[1:1,:]*ggg_rates[1:2,:])[1,:]
-	rates_accepted_ggg[!, "Rotated PC 2"] = (R[2:2,:]*ggg_rates[1:2,:])[1,:]
-	rates_accepted_ggg[!, "Data"] = ["Green, Green, Green" for i in 1:length(ggg_rates[1,:])]
+	rates_accepted_ggg[!, "rPC 1"] = (R[1:1,:]*ggg_rates[1:2,:])[1,:]
+	rates_accepted_ggg[!, "rPC 2"] = (R[2:2,:]*ggg_rates[1:2,:])[1,:]
+	rates_accepted_ggg[!, "Trial"] = ["Green, Green, Green" for i in 1:length(ggg_rates[1,:])]
 	
 	rates_accepted_r = DataFrame()
 	rates_accepted_r[!, "time (s)"] = time_range
-	rates_accepted_r[!, "Rotated PC 1"] = (R[1:1,:]*rrr_rates[1:2,:])[1,:]
-	rates_accepted_r[!, "Rotated PC 2"] = (R[2:2,:]*rrr_rates[1:2,:])[1,:]
-	rates_accepted_r[!, "Data"] = ["Red, Red, Red" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_accepted_r[!, "rPC 1"] = (R[1:1,:]*rrr_rates[1:2,:])[1,:]
+	rates_accepted_r[!, "rPC 2"] = (R[2:2,:]*rrr_rates[1:2,:])[1,:]
+	rates_accepted_r[!, "Trial"] = ["Red, Red, Red" for i in 1:length(pc_rates_accepted[1,:])]
 
 	rates_rejected_r = DataFrame()
 	rates_rejected_r[!, "time (s)"] = time_range
-	rates_rejected_r[!, "Rotated PC 1"] = (R[1:1,:]*ppp_rates[1:2,:])[1,:]
-	rates_rejected_r[!, "Rotated PC 2"] = (R[2:2,:]*ppp_rates[1:2,:])[1,:]
-	rates_rejected_r[!, "Data"] = ["Purple, Purple, Purple" for i in 1:length(pc_rates_reject[1,:])]
+	rates_rejected_r[!, "rPC 1"] = (R[1:1,:]*ppp_rates[1:2,:])[1,:]
+	rates_rejected_r[!, "rPC 2"] = (R[2:2,:]*ppp_rates[1:2,:])[1,:]
+	rates_rejected_r[!, "Trial"] = ["Purple, Purple, Purple" for i in 1:length(pc_rates_reject[1,:])]
 
 	rates_blank_r = DataFrame()
 	rates_blank_r[!, "time (s)"] = time_range
-	rates_blank_r[!, "Rotated PC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
-	rates_blank_r[!, "Rotated PC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
-	rates_blank_r[!, "Data"] = ["No stimulus" for i in 1:length(pc_rates_reject[1,:])]
+	rates_blank_r[!, "rPC 1"] = (R[1:1,:]*blank_pc_1_2[1:2,:])[1,:]
+	rates_blank_r[!, "rPC 2"] = (R[2:2,:]*blank_pc_1_2[1:2,:])[1,:]
+	rates_blank_r[!, "Trial"] = ["No stimuli" for i in 1:length(pc_rates_reject[1,:])]
 	
 	colors_rotated_ex = [
 		 "Purple, Purple, Purple" => colorant"#662BF0",
 		"Green, Green, Green" => colorant"#5CD629",
 		"Red, Red, Red" => colorant"#DA3A32",
-		"No stimulus" => colorant"#F0B72B",
+		"No stimuli" => colorant"#F0B72B",
 	]
 	
 	plt_rotated_pc_examples = data(rates_accepted_r) * visual(Lines) + data(rates_rejected_r) * visual(Lines) + data(rates_accepted_ggg) * visual(Lines) + data(rates_blank_r) * visual(Lines)
 	fg_rotated_pc_example = draw(
-		plt_rotated_pc_examples * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		plt_rotated_pc_examples * mapping(:"time (s)", :"rPC 1"; color=:"Trial"); 
 		palettes=(color=colors_rotated_ex,)
 	)
 end
@@ -469,25 +469,25 @@ begin
 	
 	rates_rgr = DataFrame()
 	rates_rgr[!, "time (s)"] = time_range
-	rates_rgr[!, "Rotated PC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
-	rates_rgr[!, "Rotated PC 2"] = (R[2:2,:]*rgr_rates[1:2,:])[1,:]
-	rates_rgr[!, "Data"] = ["Red, Green, Red" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_rgr[!, "rPC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr[!, "rPC 2"] = (R[2:2,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr[!, "Trial"] = ["Red, Green, Red" for i in 1:length(pc_rates_accepted[1,:])]
 
 	rates_pgp = DataFrame()
 	rates_pgp[!, "time (s)"] = time_range
-	rates_pgp[!, "Rotated PC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
-	rates_pgp[!, "Rotated PC 2"] = (R[2:2,:]*pgp_rates[1:2,:])[1,:]
-	rates_pgp[!, "Data"] = ["Purple, Green, Purple" for i in 1:length(pc_rates_reject[1,:])]
+	rates_pgp[!, "rPC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp[!, "rPC 2"] = (R[2:2,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp[!, "Trial"] = ["Purple, Green, Purple" for i in 1:length(pc_rates_reject[1,:])]
 	
 	colors_rotated_ex_reject = [
 		 "Purple, Green, Purple" => colorant"#662BF0",
 		"Red, Green, Red" => colorant"#DA3A32",
-		"No stimulus" => colorant"#F0B72B",
+		"No stimuli" => colorant"#F0B72B",
 	]
 	
 	plt_rotated_pc_rej = data(rates_rgr) * visual(Lines) + data(rates_pgp) * visual(Lines) + data(rates_blank_r) * visual(Lines)
 	fg_rotated_pc_rej = draw(
-		plt_rotated_pc_rej * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		plt_rotated_pc_rej * mapping(:"time (s)", :"rPC 1"; color=:"Trial"); 
 		palettes=(color=colors_rotated_ex_reject,)
 	)
 end
@@ -542,14 +542,14 @@ begin
 	
 	sin_df = DataFrame()
 	sin_df[!, "time (s)"] = time_range
-	sin_df[!, "Rotated PC 1"] = model_fit(time_range, [7, 2*π/0.29, 0, -1.5])
-	sin_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_df[!, "rPC 1"] = model_fit(time_range, [7, 2*π/0.29, 0, -1.5])
+	sin_df[!, "Trial"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
 
-	colors_sines = ["No stimulus" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
+	colors_sines = ["No stimuli" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
 	
 	plt_sin = data(sin_df) * visual(Lines) + data(rates_blank_r) * visual(Lines)
 	fig_sin = draw(
-		plt_sin * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		plt_sin * mapping(:"time (s)", :"rPC 1"; color=:"Trial"); 
 		palettes=(color=colors_sines,)
 	)
 end
@@ -572,23 +572,23 @@ constructed_sine_wave = sine_wave(
 begin
 	sin_construct_4_df = DataFrame()
 	sin_construct_4_df[!, "time (s)"] = constructed_sine_wave.time
-	sin_construct_4_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[4])
-	sin_construct_4_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_4_df[!, "rPC 1"] = constructed_sine_wave(testing_input_funcs[4])
+	sin_construct_4_df[!, "Dynamics"] = ["Handcrafted model" for i in 1:length(pc_rates_reject[1,:])]
 	sin_construct_4_df[!, "Row_iden"] = ["P G R" for i in 1:length(pc_rates_reject[1,:])]
 
 	pgr_rates = predict(M, r_out_test[:,:,4])
 	
 	sin_pgr_df = DataFrame()
 	sin_pgr_df[!, "time (s)"] = constructed_sine_wave.time
-	sin_pgr_df[!, "Rotated PC 1"] = (R[1:1,:]*pgr_rates[1:2,:])[1,:]
-	sin_pgr_df[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_reject[1,:])]
+	sin_pgr_df[!, "rPC 1"] = (R[1:1,:]*pgr_rates[1:2,:])[1,:]
+	sin_pgr_df[!, "Dynamics"] = ["Trained model" for i in 1:length(pc_rates_reject[1,:])]
 	sin_pgr_df[!, "Row_iden"] = ["P G R" for i in 1:length(pc_rates_reject[1,:])]
 	
-	colors_sine_comparison = ["Recurrent network" => colorant"#F0B72B", "Hand constructed" => colorant"#29E6E5"]
+	colors_sine_comparison = ["Trained model" => colorant"#F0B72B", "Handcrafted model" => colorant"#29E6E5"]
 	
 	plt_sin_comp = data(sin_construct_4_df) * visual(Lines) + data(sin_pgr_df) * visual(Lines)
 	fig_sin_comp = draw(
-		plt_sin_comp * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		plt_sin_comp * mapping(:"time (s)", :"rPC 1"; color=:"Dynamics"); 
 		palettes=(color=colors_sine_comparison,)
 	)
 end
@@ -597,19 +597,19 @@ end
 begin
 	rates_pgp_comp = DataFrame()
 	rates_pgp_comp[!, "time (s)"] = time_range
-	rates_pgp_comp[!, "Rotated PC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
-	rates_pgp_comp[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_pgp_comp[!, "rPC 1"] = (R[1:1,:]*pgp_rates[1:2,:])[1,:]
+	rates_pgp_comp[!, "Dynamics"] = ["Trained model" for i in 1:length(pc_rates_accepted[1,:])]
 	rates_pgp_comp[!, "Row_iden"] = ["P G P" for i in 1:length(pc_rates_accepted[1,:])]
 
 	sin_construct_17_df = DataFrame()
 	sin_construct_17_df[!, "time (s)"] = constructed_sine_wave.time
-	sin_construct_17_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[17])
-	sin_construct_17_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_17_df[!, "rPC 1"] = constructed_sine_wave(testing_input_funcs[17])
+	sin_construct_17_df[!, "Dynamics"] = ["Handcrafted model" for i in 1:length(pc_rates_reject[1,:])]
 	sin_construct_17_df[!, "Row_iden"] = ["P G P" for i in 1:length(pc_rates_reject[1,:])]
 	
 	plt_sin_comp_rej_17 = data(rates_pgp_comp) * visual(Lines) + data(sin_construct_17_df) * visual(Lines)
 	fg_sin_comp_rej_17 = draw(
-		plt_sin_comp_rej_17 * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		plt_sin_comp_rej_17 * mapping(:"time (s)", :"rPC 1"; color=:"Dynamics"); 
 		palettes=(color=colors_sine_comparison,)
 	)
 end
@@ -618,19 +618,19 @@ end
 begin
 	rates_rgr_comp = DataFrame()
 	rates_rgr_comp[!, "time (s)"] = time_range
-	rates_rgr_comp[!, "Rotated PC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
-	rates_rgr_comp[!, "Data"] = ["Recurrent network" for i in 1:length(pc_rates_accepted[1,:])]
+	rates_rgr_comp[!, "rPC 1"] = (R[1:1,:]*rgr_rates[1:2,:])[1,:]
+	rates_rgr_comp[!, "Dynamics"] = ["Trained model" for i in 1:length(pc_rates_accepted[1,:])]
 	rates_rgr_comp[!, "Row_iden"] = ["R G R" for i in 1:length(pc_rates_accepted[1,:])]
 
 	sin_construct_23_df = DataFrame()
 	sin_construct_23_df[!, "time (s)"] = constructed_sine_wave.time
-	sin_construct_23_df[!, "Rotated PC 1"] = constructed_sine_wave(testing_input_funcs[23])
-	sin_construct_23_df[!, "Data"] = ["Hand constructed" for i in 1:length(pc_rates_reject[1,:])]
+	sin_construct_23_df[!, "rPC 1"] = constructed_sine_wave(testing_input_funcs[23])
+	sin_construct_23_df[!, "Dynamics"] = ["Handcrafted model" for i in 1:length(pc_rates_reject[1,:])]
 	sin_construct_23_df[!, "Row_iden"] = ["R G R" for i in 1:length(pc_rates_reject[1,:])]
 	
 	plt_sin_comp_rej_23 = data(rates_rgr_comp) * visual(Lines) + data(sin_construct_23_df) * visual(Lines)
 	fg_sin_comp_rej_23 = draw(
-		plt_sin_comp_rej_23 * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data"); 
+		plt_sin_comp_rej_23 * mapping(:"time (s)", :"rPC 1"; color=:"Dynamics"); 
 		palettes=(color=colors_sine_comparison,)
 	)
 end
@@ -642,7 +642,7 @@ md"Summary figure"
 begin
 	plt_sin_comp_all = data(sin_construct_4_df) * visual(Lines) + data(sin_pgr_df) * visual(Lines) + data(rates_rgr_comp) * visual(Lines) + data(sin_construct_23_df) * visual(Lines) + data(rates_pgp_comp) * visual(Lines) + data(sin_construct_17_df) * visual(Lines)
 	fig_sin_comp_all = draw(
-		plt_sin_comp_all * mapping(:"time (s)", :"Rotated PC 1"; color=:"Data", row=:"Row_iden"); 
+		plt_sin_comp_all * mapping(:"time (s)", :"rPC 1"; color=:"Dynamics", row=:"Row_iden"); 
 		palettes=(color=colors_sine_comparison,)
 	)
 end
@@ -2831,7 +2831,7 @@ version = "3.5.0+0"
 # ╟─284f0c5f-ba19-4ee2-b139-9ebfdd8c130a
 # ╟─0a9ca99d-ff90-4846-97ea-1fee939cdb3c
 # ╠═c00e5da1-47e7-45af-b089-18ec4fd2c48f
-# ╟─af8f0866-3ea0-48c8-8afc-81f862e02e86
+# ╠═af8f0866-3ea0-48c8-8afc-81f862e02e86
 # ╟─804e26e2-c98e-46da-ae21-1485b9e16589
 # ╟─6a1d7214-7e48-4412-a1b9-2fa02c091115
 # ╟─12c461cd-d5f3-431b-a99d-a0fb75825f4d
