@@ -1,4 +1,7 @@
 \documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{tikz}
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
@@ -7,11 +10,25 @@
 \usepackage{xcolor}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+    
+\newcommand\copyrighttext{%
+  \footnotesize \textcopyright 2023 IEEE. Personal use of this material is permitted.
+  Permission from IEEE must be obtained for all other uses, in any current or future
+  media, including reprinting/republishing this material for advertising or promotional
+  purposes, creating new collective works, for resale or redistribution to servers or
+  lists, or reuse of any copyrighted component of this work in other works.}
+\newcommand\copyrightnotice{%
+\begin{tikzpicture}[remember picture,overlay]
+\node[anchor=south,yshift=10pt] at (current page.south) {\fbox{\parbox{\dimexpr\textwidth-\fboxsep-\fboxrule\relax}{\copyrighttext}}};
+\end{tikzpicture}%
+}
+
+    
 \begin{document}
 
 \title{Recurrent networks recognize patterns with low-dimensional oscillations}
 
-\author{\IEEEauthorblockN{1\textsuperscript{st} Keith T. Murray}
+\author{\IEEEauthorblockN{Keith T. Murray}
 \IEEEauthorblockA{\textit{Department of Brain and Cognitive Sciences} \\
 \textit{Massachusetts Institute of Technology}\\
 Cambridge, USA \\
@@ -19,6 +36,7 @@ ktmurray@mit.edu}
 }
 
 \maketitle
+\copyrightnotice
 
 \begin{abstract}
 This study proposes a novel dynamical mechanism for pattern recognition discovered by interpreting a recurrent neural network (RNN) trained on a simple task inspired by the SET card game. We interpreted the trained RNN as recognizing patterns via phase shifts in a low-dimensional limit cycle in a manner analogous to transitions in a finite state automaton (FSA). We further validated this interpretation by handcrafting a simple oscillatory model that reproduces the dynamics of the trained RNN. Our findings not only suggest of a potential dynamical mechanism capable of pattern recognition, but also suggest of a potential neural implementation of FSA. Above all, this work contributes to the growing discourse on deep learning model interpretability.
@@ -216,7 +234,7 @@ We would like to thank Sabrina Drammis, Joshua Liu, Nancy Lynch, Nikasha Patel, 
 \bibitem{pals2023trained} M. Pals, J. H. Macke, and O. Barak, ``Trained recurrent neural networks develop phase-locked limit cycles in a working memory task,'' bioRxiv, 2023.
 \bibitem{sussillo2015neural} D. Sussillo, M. M. Churchland, M. T. Kaufman, and K. V. Shenoy, ``A neural network that finds a naturalistic solution for the production of muscle activity," \textit{Nature Neuroscience}, vol. 18, no. 7, pp. 1025--1033, 2015.
 \bibitem{cueva2018emergence} C. J. Cueva and X.-X. Wei, ``Emergence of grid-like representations by training recurrent neural networks to perform spatial localization," arXiv preprint arXiv:1803.07770, 2018.
-\bibitem{strogatz2018nonlinear} S. H. Strogatz, \textit{Nonlinear Dynamics and Chaos: With Applications to Physics, Biology, Chemistry, And Engineering}. Boca Raton: CRC Press, 2000.
+\bibitem{strogatz2018nonlinear} S. H. Strogatz, \textit{Nonlinear Dynamics and Chaos: With Applications to Physics, Biology, Chemistry, And Engineering}. Boulder: Westview Press, 2000.
 \bibitem{gordon2017joy} L. McMahon, G. Gordon, H. Gordon, and R. Gordon, \textit{The Joy of SET: The Many Mathematical Dimensions of a Seemingly Simple Card Game}. Princeton: Princeton University Press, 2017.
 \bibitem{richards2019deep} B. A. Richards, T. P. Lillicrap, P. Beaudoin, Y. Bengio, R. Bogacz, A. Christensen, C. Clopath, R. P. Costa, A. de Berker, S. Ganguli, et al., ``A deep learning framework for neuroscience,'' \textit{Nature Neuroscience}, vol. 22, no. 11, pp. 1761--1770, 2019.
 \bibitem{bezanson2017julia} J. Bezanson, A. Edelman, S. Karpinski, and V. B. Shah, ``Julia: A fresh approach to numerical computing,'' \textit{SIAM Review}, vol. 59, no. 1, pp. 65--98, 2017.
