@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://raw.githubusercontent.com/ktmurray1999/neural-rules/main/results/figures/FSA_logo.png" alt="logo" width="350"></img>
+<img src="https://github.com/ktmurray1999/neural-rules/blob/main/results/figures/pca_summary.png" alt="logo" width="400"></img>
 </div>
 
 # Recurrent networks recognize patterns with low-dimensional oscillations
