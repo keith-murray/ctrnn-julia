@@ -1,16 +1,14 @@
 <div align="center">
-<img src="https://github.com/ktmurray1999/neural-rules/blob/main/results/figures/pca_summary.png" alt="logo" width="400"></img>
+<img src="https://github.com/keith-murray/ctrnn-julia/blob/main/results/figures/pca_summary.png" alt="logo" width="400"></img>
 </div>
 
-# Recurrent networks recognize patterns with low-dimensional oscillations
+# CT-RNN implementation in the SciML Julia Ecosystem
 
-## What is thie repo?
-
-This repository contains the code for the paper "Recurrent networks recognize patterns with low-dimensional oscillations". All code is in Julia and most is executed via Pluto notebooks. Any data and models generated for the paper have been pregenerated for this repo. All figures for the paper and the LaTeX document are also here.
+This repository contains an implementation of continuous-time recurrent neural networks (CT-RNNs) in the [Julia programming language](https://julialang.org) and [SciML ecosystem](https://sciml.ai). Specifically, I implemented the architecture and training of CT-RNNs with the [Lux.jl](https://lux.csail.mit.edu/stable/), [SciMLSensitivity.jl](https://docs.sciml.ai/SciMLSensitivity/stable/), and [OrdinaryDiffEq.jl](https://docs.sciml.ai/OrdinaryDiffEq/stable/) packages.
 
 ## What is in the `RecurrentNetworks` directory?
 
-The `RecurrentNetworks` directory contains all of the code needed for model training. It is a Julia package. There are a few terminal commands required to use the package:
+The `RecurrentNetworks` directory contains all of the code needed for model training. There are a few terminal commands required to use the package:
 
 ```
 julia
@@ -21,7 +19,7 @@ Pkg.build()
 using RecurrentNetworks
 ```
 
-To train the model, run the following code:
+To train the model, execute the following code:
 
 ```
 RecurrentNetworks.schedule("./data/setup_data.jld2", "./data/models/", 1)
@@ -29,23 +27,19 @@ RecurrentNetworks.schedule("./data/setup_data.jld2", "./data/models/", 1)
 
 ## What is in the `data` directory?
 
-The `data` directory contains all the data required to train the model. Also, the `models` subdirectory contains trained models. Model `model_31.jls` is the moded used to generate figures for the paper. 
+The `data` directory contains all the data required to train the model. The `models` subdirectory contains trained models.
 
-`data_540.jls` is the training data file and `data_27.jls` is the testing data file. These were generate via the `training_testing_data.jl` script with the `SETs.csv` file. The `SETs.csv` file was generate via the `generate_data.py` script.
-
-## What is in the `results` directory?
-
-The `results` directory contains figures for the paper and the LaTeX code for the paper. Figures can be found in the `figures` subdirectory and LaTeX code can be found in the `IEEE Submission` subdirectory. The `murray_recurrent_networks.pdf` file is the latest manuscript of the paper.
+`data_540.jls` is the training data file and `data_27.jls` is the testing data file. These were generate via the `training_testing_data.jl` script and `SETs.csv` file.
 
 ## What is in the `scripts` directory?
 
-The `scripts` directory contains various scripts to generate data, examine trained models, and generate data and figures. All scripts can be run with Pluto notebooks.
+The `scripts` directory contains various scripts to generate data and examine trained models. All scripts can be run with Pluto notebooks.
 
-+ `create_scheduler.jl` - Creates a file that contains all the parameters used for training.
-+ `examine_saved_models.jl` - Performs some cursory analysis of a trained model.
-+ `generate_ieee_figures.jl` - Creates the figures for the paper and stores them in `results/figures`.
-+ `training_testing_data.jl` - Creates the data used for training and testing and stores it in `data`.
++ `create_scheduler.jl` - Creates a file containing all the parameters used for training.
++ `examine_saved_models.jl` - Performs exploratory analysis of a trained model.
++ `generate_ieee_figures.jl` - Creates and stores figures in `results/figures`.
++ `training_testing_data.jl` - Creates and stores training data in the `data` directory.
 
-## Anything else?
+## A technical note
 
-I wouldn't recommend using Julia for training recurrent neural networks. In my experience, Julia's automatic differentiation packages don't quite produce accurate gradients; however, they were close enough for this project.
+I wouldn't recommend using Julia for training CT-RNNs. My initial impression was that Julia and the SciML ecosystem could train CT-RNNs quicker than PyTorch or TensorFlow in Python; however, I've since found the [JAX ecosystem](https://jax.readthedocs.io/en/latest/) in Python to be significantly faster than Julia. Checkout my [attract-or-oscillate repository](https://github.com/keith-murray/attract-or-oscillate) where I was able to train [16,128 RNNs](https://openreview.net/forum?id=ql3u5ITQ5C) on the [MIT SuperCloud HPC](https://doi.org/10.1109/HPEC.2018.8547629) in about 60 hours.
