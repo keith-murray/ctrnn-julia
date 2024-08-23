@@ -2,11 +2,11 @@
 <img src="https://github.com/keith-murray/ctrnn-julia/blob/main/results/figures/pca_summary.png" alt="logo" width="400"></img>
 </div>
 
-# CT-RNN implementation in the SciML Julia Ecosystem
+# CT-RNN Implementation in Julia's SciML Ecosystem
 
 This repository contains an implementation of continuous-time recurrent neural networks (CT-RNNs) in the [Julia programming language](https://julialang.org) and [SciML ecosystem](https://sciml.ai). Specifically, I implemented the architecture and training of CT-RNNs with the [Lux.jl](https://lux.csail.mit.edu/stable/), [SciMLSensitivity.jl](https://docs.sciml.ai/SciMLSensitivity/stable/), and [OrdinaryDiffEq.jl](https://docs.sciml.ai/OrdinaryDiffEq/stable/) packages.
 
-## What is in the `RecurrentNetworks` directory?
+## `RecurrentNetworks` directory
 
 The `RecurrentNetworks` directory contains all of the code needed for model training. There are a few terminal commands required to use the package:
 
@@ -25,13 +25,13 @@ To train the model, execute the following code:
 RecurrentNetworks.schedule("./data/setup_data.jld2", "./data/models/", 1)
 ```
 
-## What is in the `data` directory?
+## `data` directory
 
 The `data` directory contains all the data required to train the model. The `models` subdirectory contains trained models.
 
 `data_540.jls` is the training data file and `data_27.jls` is the testing data file. These were generate via the `training_testing_data.jl` script and `SETs.csv` file.
 
-## What is in the `scripts` directory?
+## `scripts` directory
 
 The `scripts` directory contains various scripts to generate data and examine trained models. All scripts can be run with Pluto notebooks.
 
